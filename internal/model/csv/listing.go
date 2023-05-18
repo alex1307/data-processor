@@ -13,3 +13,7 @@ type Listing struct {
 	CreatedOn string `csv:"created_on"`
 	Source    string `csv:"dealer"`
 }
+
+func (s Listing) GetID() string {
+	return s.ID
+}
