@@ -1,0 +1,51 @@
+equipment:
+  1: "Бензинов"
+  2: "Дизелов"
+  3: "Електрически"
+  4: "Хибриден"
+  5: "Plug-in хибрид"
+  6: "Ръчна"
+  7: "Автоматична"
+  8: "Полуавтоматична"
+  9: "Парктроник"
+  10: "Система за контрол на дистанцията"
+  11: "DVD, TV"
+  12: "Каско"
+  13: "Подгряване на седалките"
+  14: "Адаптивно въздушно окачване"
+  15: "Напълно обслужен"
+  16: "С регистрация"
+  17: "Нов внос"
+  18: "Кожен салон"
+  19: "Шибедах"
+  20: "Метанова уредба"
+  21: "Лизинг"
+  22: "4x4"
+  23: "Газова уредба"
+  24: "Система за контрол на скоростта (автопилот)"
+  
+mapping:
+  1: petrol
+  2: diesel
+  3: electric
+  4: hybrid
+  5: plug_in_hybrid
+  6: manual
+  7: automatic
+  8: semi_automatic
+  9: parktronic
+  10: adaptive_cruise_control
+  11: dvd
+  12: insurance
+  13: heated_seats
+  14: adapter_air_suspension
+  15: serviced
+  16: registration
+  17: new_import
+  18: leather_seats
+  19: sunroof
+  20: methane
+  21: leasing
+  22: four_wheel_drive
+  23: lpg
+  24: cruise_control

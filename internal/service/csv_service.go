@@ -10,10 +10,6 @@ import (
 	"github.com/gocarina/gocsv"
 )
 
-type DataReader interface {
-	GetListings(filename string) ([]*csv.Listing, error)
-}
-
 type GenericCSVReaderService[T csv.Identity] struct {
 	data map[string]T
 	keys mapset.Set[string]
