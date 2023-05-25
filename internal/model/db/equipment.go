@@ -5,7 +5,7 @@ import (
 )
 
 type Equipment struct {
-	ID                    string    `gorm:"column:id; primary_key:yes; type: character varying(36)"`
+	ID                    int32     `gorm:"column:id; primary_key:yes;autoIncrement:false;"`
 	Parktronic            bool      `gorm:"column:parktronic; default: false"`
 	AdaptiveCruiseControl bool      `gorm:"column:adaptive_cruise_control; default: false"`
 	DVD                   bool      `gorm:"column:dvd; default: false"`
@@ -13,6 +13,7 @@ type Equipment struct {
 	HeatedSeats           bool      `gorm:"column:heated_seats; default: false"`
 	AdapterAirSuspension  bool      `gorm:"column:adapter_air_suspension; default: false"`
 	Registration          bool      `gorm:"column:registration; default: false"`
+	FullyServiced         bool      `gorm:"column:fully_serviced; default: false"`
 	NewImport             bool      `gorm:"column:new_import; default: false"`
 	LeatherSeats          bool      `gorm:"column:leather_seats; default: false"`
 	Sunroof               bool      `gorm:"column:sunroof; default: false"`
@@ -21,5 +22,5 @@ type Equipment struct {
 	FourWheelDrive        bool      `gorm:"column:four_wheel_drive; default: false"`
 	LPG                   bool      `gorm:"column:lpg; default: false"`
 	CruiseControl         bool      `gorm:"column:cruise_control; default: false"`
-	UpdatedOn             time.Time `gorm:"column:updated_on;"`
+	UpdatedOn             time.Time `gorm:"column:created_on;default: now();not null; type: date"`
 }

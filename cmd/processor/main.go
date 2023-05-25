@@ -46,9 +46,8 @@ func main() {
 	}
 	err = db.AutoMigrate(
 		&dbmodel.Equipment{},
-		&dbmodel.Details{},
 		&dbmodel.Status{},
-		&dbmodel.Equipment{})
+		&dbmodel.Vehicle{})
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -4,9 +4,25 @@ import (
 	ymlmodel "data-processor/internal/model/yml"
 	"log"
 	"os"
+	"sync"
 
 	yaml "gopkg.in/yaml.v3"
 )
+
+var (
+	eqservice *EquipmentService
+	eqonce    sync.Once
+	eqinit    = func(filename string) {
+		eqservice = NewEquipmentService(filename)
+	}
+)
+
+func GetEquipmentService(filename string) *EquipmentService {
+	eqonce.Do(func() {
+		eqinit(filename)
+	})
+	return eqservice
+}
 
 type EquipmentService struct {
 	equipment ymlmodel.Config
@@ -37,7 +53,7 @@ func (e *EquipmentService) GetColumns() map[int]string {
 	return e.equipment.Mapping
 }
 
-func (e *EquipmentService) Map2Equipment(id int32) map[string]bool {
+func (e *EquipmentService) Equipment2Map(id int32) map[string]bool {
 
 	var indices []int
 	for i := 0; id > 0; i++ {
