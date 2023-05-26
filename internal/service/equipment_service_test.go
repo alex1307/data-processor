@@ -11,8 +11,12 @@ import (
 	"github.com/ulule/deepcopier"
 )
 
+var (
+	db_service        = NewDBService("../../resources/config/db_config.yml")
+	equipment_service = NewEquipmentService("../../resources/config/equipment_config.yml", db_service)
+)
+
 func TestEquipmentService_GetEquipment(t *testing.T) {
-	equipment_service := NewEquipmentService("../../resources/config/equipment_config.yml")
 	equipment := equipment_service.GetEquipment()
 	columns := equipment_service.GetColumns()
 	assert.Equal(t, len(equipment), len(columns))
@@ -20,8 +24,7 @@ func TestEquipmentService_GetEquipment(t *testing.T) {
 }
 
 func TestEquipmentService_GetEquipmentName(t *testing.T) {
-	equipment_service := NewEquipmentService("../../resources/config/equipment_config.yml")
-	v := equipment_service.Equipment2Map(24029696)
+	v := equipment_service.equpipment2map(24029696)
 	for k, v := range v {
 		log.Println(k, v)
 	}
