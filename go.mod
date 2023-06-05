@@ -4,12 +4,16 @@ go 1.20
 
 require (
 	github.com/gocarina/gocsv v0.0.0-20230513223533-9ddd7fd60602
-	github.com/stretchr/testify v1.8.2
-	gorm.io/driver/postgres v1.5.0
+	github.com/stretchr/testify v1.8.4
+	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.1
 )
 
-require github.com/mattn/go-sqlite3 v1.14.16 // indirect
+require (
+	github.com/kr/text v0.2.0 // indirect
+	github.com/mattn/go-sqlite3 v1.14.17 // indirect
+	github.com/rogpeppe/go-internal v1.10.0 // indirect
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
