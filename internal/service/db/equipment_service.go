@@ -1,6 +1,7 @@
 package service
 
 import (
+	"data-processor/internal/connect"
 	dbmodel "data-processor/internal/model/db"
 	jsonmodel "data-processor/internal/model/json"
 	ymlmodel "data-processor/internal/model/yml"
@@ -17,12 +18,12 @@ import (
 var (
 	eqservice *EquipmentService
 	eqonce    sync.Once
-	eqinit    = func(filename string, db_service Connect) {
+	eqinit    = func(filename string, db_service connect.Connect) {
 		eqservice = NewEquipmentService(filename, db_service)
 	}
 )
 
-func GetEquipmentService(filename string, db_service Connect) *EquipmentService {
+func GetEquipmentService(filename string, db_service connect.Connect) *EquipmentService {
 	eqonce.Do(func() {
 		eqinit(filename, db_service)
 	})
@@ -31,10 +32,10 @@ func GetEquipmentService(filename string, db_service Connect) *EquipmentService 
 
 type EquipmentService struct {
 	equipment  ymlmodel.Config
-	db_service Connect
+	db_service connect.Connect
 }
 
-func NewEquipmentService(filename string, db_service Connect) *EquipmentService {
+func NewEquipmentService(filename string, db_service connect.Connect) *EquipmentService {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"data-processor/internal/connect"
 	modelcsv "data-processor/internal/model/csv"
 	dbmodel "data-processor/internal/model/db"
 
@@ -8,10 +9,10 @@ import (
 )
 
 type VehicleService struct {
-	db_service Connect
+	db_service connect.Connect
 }
 
-func NewVehicleService(db_service Connect) *VehicleService {
+func NewVehicleService(db_service connect.Connect) *VehicleService {
 	return &VehicleService{
 		db_service,
 	}

@@ -1,6 +1,7 @@
 package gtests
 
 import (
+	"data-processor/internal/connect"
 	service "data-processor/internal/service/db"
 	"testing"
 
@@ -9,7 +10,7 @@ import (
 
 func TestProcessCSVFiles(t *testing.T) {
 	equipment_config := "/Users/matkat/Software/Go/src/data-processor/resources/config/equipment_config.yml"
-	data_service := service.NewDataService(service.GetInMemoryConfig(), equipment_config)
+	data_service := service.NewDataService(connect.GetInMemoryConfig(), equipment_config)
 	list_files := []string{
 		"/Users/matkat/Software/release/Rust/scraper/resources/data/listing.csv"}
 	details_files := []string{

@@ -1,6 +1,7 @@
 package gtests
 
 import (
+	"data-processor/internal/connect"
 	service "data-processor/internal/service/db"
 	"testing"
 
@@ -8,7 +9,7 @@ import (
 )
 
 var (
-	db_service        = service.GetDBService(service.GetInMemoryConfig())
+	db_service        = connect.GetDBService(connect.GetInMemoryConfig())
 	equipment_service = service.NewEquipmentService("../resources/config/equipment_config.yml", db_service)
 )
 

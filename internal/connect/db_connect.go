@@ -1,4 +1,4 @@
-package service
+package connect
 
 import (
 	dbmodel "data-processor/internal/model/db"
@@ -100,6 +100,7 @@ func ConnectToDatabase(config Config) Connect {
 
 	case "sqlite":
 		db, err = gorm.Open(sqlite.Open(connectionString), &gorm.Config{})
+
 	default:
 		err = fmt.Errorf("database %s not supported", config.GetDatabase())
 	}

@@ -13,13 +13,13 @@ import (
 
 func TestFindUniqueIDs(t *testing.T) {
 	listing_service := service.NewGenericCSVReaderService[modelcsv.Listing]()
-	listing_filename := "resources/test/listing.csv"
+	listing_filename := "../resources/test/listing.csv"
 	err := listing_service.ReadFromFiles(listing_filename)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
 	details_service := service.NewGenericCSVReaderService[modelcsv.Details]()
-	details_filename := "resources/test/details.csv"
+	details_filename := "../resources/test/details.csv"
 	err = details_service.ReadFromFiles(details_filename)
 	if err != nil {
 		t.Errorf("Error: %v", err)

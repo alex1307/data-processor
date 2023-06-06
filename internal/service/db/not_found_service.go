@@ -1,32 +1,60 @@
 package service
 
 import (
+	"data-processor/internal/connect"
 	csv "data-processor/internal/model/csv"
 	db "data-processor/internal/model/db"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type NotFoundService struct {
-	db *gorm.DB
+	db_service connect.Connect
 }
 
-func NewNotFoundService(db_service Connect) *NotFoundService {
+func NewNotFoundService(db_service connect.Connect) *NotFoundService {
 	return &NotFoundService{
-		eqservice.db_service.Connect(),
+		db_service,
 	}
 }
 
 func (s *NotFoundService) FindAllIn(ids []string) []db.NotFound {
 	var records []db.NotFound
-	s.db.Where("id IN ?", ids).Find(&records)
+	db := s.db_service.Connect()
+	db.Where("id IN ?", ids).Find(&records)
 	return records
+}
+
+func (s *NotFoundService) SaveAll(data []csv.MobileDataError) []db.NotFound {
+	var ids = Map(data, func(record csv.MobileDataError) string {
+		return record.ID
+	})
+	var records = s.FindAllIn(ids)
+	var new_records []db.NotFound
+	for _, id := range ids {
+		for _, record := range records {
+			if record.ID == id {
+				record.Retry += 1
+				record.UpdatedOn = time.Now()
+				new_records = append(new_records, record)
+			} else {
+				new_records = append(new_records, db.NotFound{
+					ID:        id,
+					Retry:     1,
+					CreatedOn: time.Now(),
+				})
+			}
+		}
+
+	}
+	db := s.db_service.Connect()
+	db.Create(&new_records)
+	return new_records
 }
 
 func (s *NotFoundService) Find(id string) (db.NotFound, bool) {
 	var record db.NotFound
-	result := s.db.Where("id = ?", id).First(&record)
+	database := s.db_service.Connect()
+	result := database.Where("id = ?", id).First(&record)
 	if result.Error != nil {
 		return db.NotFound{}, false
 	}
@@ -45,7 +73,8 @@ func (s *NotFoundService) SaveOrUpdate(record csv.MobileDataError) (db.NotFound,
 			CreatedOn: time.Now(),
 		}
 	}
-	result := s.db.Save(&dbrecord)
+	database := s.db_service.Connect()
+	result := database.Save(&dbrecord)
 	if result.Error != nil {
 		return db.NotFound{}, false
 	}

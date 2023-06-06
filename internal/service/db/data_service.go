@@ -1,6 +1,7 @@
 package service
 
 import (
+	"data-processor/internal/connect"
 	csv "data-processor/internal/model/csv"
 	csvservice "data-processor/internal/service/csv"
 )
@@ -11,8 +12,8 @@ type DataService struct {
 	vehicle_service   *VehicleService
 }
 
-func NewDataService(db_config Config, equipment_config string) *DataService {
-	db_service := GetDBService(db_config)
+func NewDataService(db_config connect.Config, equipment_config string) *DataService {
+	db_service := connect.GetDBService(db_config)
 	return &DataService{
 		record_service:    csvservice.NewRecordService(),
 		equipment_service: NewEquipmentService(equipment_config, db_service),

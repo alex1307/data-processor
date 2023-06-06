@@ -5,3 +5,7 @@ type MobileDataError struct {
 	Error     string `csv:"error"`
 	CreatedOn string `csv:"created_on"`
 }
+
+func (s MobileDataError) GetID() string {
+	return s.ID
+}
