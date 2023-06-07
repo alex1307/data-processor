@@ -38,8 +38,8 @@ func TestFindUniqueIDs(t *testing.T) {
 }
 
 func TestProcess(t *testing.T) {
-	listing_filename := "resources/test/listing.csv"
-	details_filename := "resources/test/details.csv"
+	listing_filename := "../resources/test/listing.csv"
+	details_filename := "../resources/test/details.csv"
 	all, err := service.Process(listing_filename, details_filename)
 	if err != nil {
 		t.Errorf("Error: %v", err)
@@ -47,7 +47,7 @@ func TestProcess(t *testing.T) {
 	assert.Equal(t, len(all), 67)
 	record_service := service.NewGenericCSVReaderService[modelcsv.Record]()
 	record_service.LoadFromSlice(all)
-	records_filename := "resources/test/records.csv"
+	records_filename := "../resources/test/records.csv"
 	err = record_service.WriteToFile(records_filename)
 	if err != nil {
 		t.Errorf("Error: %v", err)
@@ -56,7 +56,7 @@ func TestProcess(t *testing.T) {
 
 func TestNotFound(t *testing.T) {
 	listing_service := service.NewGenericCSVReaderService[modelcsv.Listing]()
-	listing_filename := "resources/test/listing.csv"
+	listing_filename := "../resources/test/listing.csv"
 	err := listing_service.ReadFromFiles(listing_filename)
 	if err != nil {
 		t.Errorf("Error: %v", err)

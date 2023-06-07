@@ -4,6 +4,7 @@ import (
 	"data-processor/internal/connect"
 	csv "data-processor/internal/model/csv"
 	db "data-processor/internal/model/db"
+	"log"
 	"time"
 )
 
@@ -29,23 +30,23 @@ func (s *NotFoundService) SaveAll(data []csv.MobileDataError) []db.NotFound {
 		return record.ID
 	})
 	var records = s.FindAllIn(ids)
+
 	var new_records []db.NotFound
-	for _, id := range ids {
-		for _, record := range records {
-			if record.ID == id {
-				record.Retry += 1
-				record.UpdatedOn = time.Now()
-				new_records = append(new_records, record)
-			} else {
-				new_records = append(new_records, db.NotFound{
-					ID:        id,
-					Retry:     1,
-					CreatedOn: time.Now(),
-				})
+	for _, r := range data {
+		record := db.NotFound{
+			ID:        r.ID,
+			Retry:     1,
+			CreatedOn: time.Now(),
+		}
+		for _, found := range records {
+			if found.ID == record.ID {
+				record.Retry = found.Retry + 1
 			}
 		}
+		new_records = append(new_records, record)
 
 	}
+	log.Println("Saving ", len(new_records), " records...")
 	db := s.db_service.Connect()
 	db.Create(&new_records)
 	return new_records

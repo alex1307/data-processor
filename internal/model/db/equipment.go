@@ -22,5 +22,5 @@ type Equipment struct {
 	FourWheelDrive        bool      `gorm:"column:four_wheel_drive; default: false"`
 	LPG                   bool      `gorm:"column:lpg; default: false"`
 	CruiseControl         bool      `gorm:"column:cruise_control; default: false"`
-	UpdatedOn             time.Time `gorm:"column:created_on;default: now();not null; type: date"`
+	CreatedOn             time.Time `gorm:"column:created_on; not null; type: date"`
 }

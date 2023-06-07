@@ -21,6 +21,6 @@ type Vehicle struct {
 	Phone     string    `gorm:"column:phone; not null; type: character varying(25); default: 'N/A'"`
 	Promoted  bool      `gorm:"column:promoted; default: false"`
 	Sold      bool      `gorm:"column:sold; default: false"`
-	CreatedOn time.Time `gorm:"column:created_on;default: now();not null; type: date"`
-	UpdatedOn time.Time `gorm:"column:updated_on; null"`
+	CreatedOn time.Time `gorm:"column:created_on; not null; type: date"`
+	UpdatedOn time.Time `gorm:"column:updated_on; null; type: date"`
 }

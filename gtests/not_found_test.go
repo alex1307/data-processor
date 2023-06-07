@@ -24,8 +24,9 @@ func TestLoadNotFoundErrors(t *testing.T) {
 	}
 	assert.Equal(t, len(csv_not_found_service.GetIdentities().ToSlice()), 420)
 	values := pie.Values(csv_not_found_service.GetData())
-	first_half := values[0:210]
 	assert.Equal(t, len(values), 420)
+	first_half := values[0:210]
+	assert.Equal(t, len(first_half), 210)
 	saved := not_found_service.SaveAll(first_half)
 	counter := 0
 	for _, v := range saved {
@@ -34,12 +35,12 @@ func TestLoadNotFoundErrors(t *testing.T) {
 			counter++
 		}
 	}
-	assert.Equal(t, saved, 210)
+	assert.Equal(t, len(saved), 210)
 	assert.Equal(t, counter, 210)
 	saved = not_found_service.SaveAll(values)
 
-	assert.Equal(t, saved, 420)
-
+	assert.Equal(t, len(saved), 420)
+	counter = 0
 	for _, v := range saved {
 		if v.Retry == 2 {
 			counter++

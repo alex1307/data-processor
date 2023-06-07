@@ -7,6 +7,7 @@ import (
 	"os"
 	"sync"
 
+	_ "github.com/mattn/go-sqlite3"
 	yaml "gopkg.in/yaml.v3"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -88,24 +89,27 @@ func ConnectToDatabase(config Config) Connect {
 				TablePrefix:   config.GetTablePrefix(), // schema name
 				SingularTable: false,
 			}})
-		err = db.AutoMigrate(
-			&dbmodel.Equipment{},
-			&dbmodel.Status{},
-			&dbmodel.Vehicle{},
-			&dbmodel.NotFound{})
-		if err != nil {
-			log.Panicln("Failed to migrate database", err)
-			panic("failed to sync with database")
-		}
 
 	case "sqlite":
+
 		db, err = gorm.Open(sqlite.Open(connectionString), &gorm.Config{})
+
+		// Migrate the database schema
 
 	default:
 		err = fmt.Errorf("database %s not supported", config.GetDatabase())
 	}
 	if err != nil {
 		panic("failed to connect database")
+	}
+
+	err = db.AutoMigrate(&dbmodel.NotFound{},
+		&dbmodel.Status{},
+		&dbmodel.Vehicle{},
+		&dbmodel.Equipment{})
+	if err != nil {
+		log.Panicln("Failed to migrate database", err)
+		panic("failed to sync with database")
 	}
 
 	return Database{db}
