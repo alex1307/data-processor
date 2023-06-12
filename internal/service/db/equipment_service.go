@@ -102,6 +102,38 @@ func (s *EquipmentService) SaveAll(ListOfEquipmentIds *[]int32) int32 {
 	return int32(len(equipments))
 }
 
+func (s *EquipmentService) Delete(EquipmentID int32) int32 {
+	db := s.db_service.Connect()
+	err := db.Delete(&dbmodel.Equipment{}, EquipmentID).Error
+	if err != nil {
+		log.Println(err)
+		return 0
+	}
+	return EquipmentID
+}
+
+func (s *EquipmentService) Count() (int64, error) {
+	db := s.db_service.Connect()
+	var count int64
+	err := db.Model(&dbmodel.Equipment{}).Count(&count).Error
+	if err != nil {
+		log.Println(err)
+		return 0, err
+	}
+	return count, nil
+}
+
+func (s *EquipmentService) FindEquipment(EquipmentID int32) (bool, dbmodel.Equipment) {
+	db := s.db_service.Connect()
+	var equipment dbmodel.Equipment
+	err := db.First(&equipment, EquipmentID).Error
+	if err != nil {
+		log.Println(err)
+		return false, dbmodel.Equipment{}
+	}
+	return true, equipment
+}
+
 func (s *EquipmentService) FromID(EquipmentID int32) *dbmodel.Equipment {
 	target := &dbmodel.Equipment{}
 	v := s.equpipment2map(EquipmentID)

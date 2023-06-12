@@ -42,3 +42,43 @@ func (v *VehicleService) SaveAll(records []modelcsv.Record) error {
 	}
 	return nil
 }
+
+func (v *VehicleService) GetVehicle(id string) (dbmodel.Vehicle, error) {
+	vehicle := dbmodel.Vehicle{}
+	db := v.db_service.Connect()
+	err := db.First(&vehicle, id).Error
+	if err != nil {
+		return vehicle, err
+	}
+	return vehicle, nil
+}
+
+func (v *VehicleService) GetVehicles() ([]dbmodel.Vehicle, error) {
+	vehicles := []dbmodel.Vehicle{}
+	db := v.db_service.Connect()
+	err := db.Find(&vehicles).Error
+	if err != nil {
+		return vehicles, err
+	}
+	return vehicles, nil
+}
+
+func (v *VehicleService) Delete(id string) error {
+	vehicle := dbmodel.Vehicle{}
+	db := v.db_service.Connect()
+	err := db.Delete(&vehicle, id).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *VehicleService) Count() (int64, error) {
+	db := v.db_service.Connect()
+	var count int64
+	err := db.Model(&dbmodel.Vehicle{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

@@ -3,11 +3,12 @@ module data-processor
 go 1.20
 
 require (
-	github.com/elliotchance/pie/v2 v2.5.2
+	github.com/elliotchance/pie/v2 v2.6.0
 	github.com/gocarina/gocsv v0.0.0-20230513223533-9ddd7fd60602
+	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/stretchr/testify v1.8.4
 	gorm.io/driver/postgres v1.5.2
-	gorm.io/gorm v1.25.1
+	gorm.io/gorm v1.25.2-0.20230530020048-26663ab9bf55
 )
 
 require (
@@ -15,7 +16,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/pgx/v5 v5.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 )
@@ -31,5 +31,5 @@ require (
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
 	golang.org/x/text v0.9.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	gorm.io/driver/sqlite v1.5.1
+	gorm.io/driver/sqlite v1.5.2
 )
