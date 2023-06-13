@@ -3,8 +3,8 @@ package service
 import (
 	"data-processor/internal/connect"
 	csv "data-processor/internal/model/csv"
-	db "data-processor/internal/model/db"
 	dbmodel "data-processor/internal/model/db"
+
 	"log"
 	"time"
 )
@@ -19,8 +19,8 @@ func NewNotFoundService(db_service connect.Connect) *NotFoundService {
 	}
 }
 
-func (s *NotFoundService) FindAllIn(ids []string) []db.NotFound {
-	var records []db.NotFound
+func (s *NotFoundService) FindAllIn(ids []string) []dbmodel.NotFound {
+	var records []dbmodel.NotFound
 	db := s.db_service.Connect()
 	db.Where("id IN ?", ids).Find(&records)
 	return records
@@ -36,15 +36,15 @@ func (s *NotFoundService) Count() (int64, error) {
 	return count, nil
 }
 
-func (s *NotFoundService) SaveAll(data []csv.MobileDataError) []db.NotFound {
+func (s *NotFoundService) SaveAll(data []csv.MobileDataError) []dbmodel.NotFound {
 	var ids = Map(data, func(record csv.MobileDataError) string {
 		return record.ID
 	})
 	var records = s.FindAllIn(ids)
 
-	var new_records []db.NotFound
+	var new_records []dbmodel.NotFound
 	for _, r := range data {
-		record := db.NotFound{
+		record := dbmodel.NotFound{
 			ID:        r.ID,
 			Retry:     1,
 			CreatedOn: time.Now(),
@@ -63,23 +63,23 @@ func (s *NotFoundService) SaveAll(data []csv.MobileDataError) []db.NotFound {
 	return new_records
 }
 
-func (s *NotFoundService) Find(id string) (db.NotFound, bool) {
-	var record db.NotFound
+func (s *NotFoundService) Find(id string) (dbmodel.NotFound, bool) {
+	var record dbmodel.NotFound
 	database := s.db_service.Connect()
 	result := database.Where("id = ?", id).First(&record)
 	if result.Error != nil {
-		return db.NotFound{}, false
+		return dbmodel.NotFound{}, false
 	}
 	return record, true
 }
 
-func (s *NotFoundService) SaveOrUpdate(record csv.MobileDataError) (db.NotFound, bool) {
+func (s *NotFoundService) SaveOrUpdate(record csv.MobileDataError) (dbmodel.NotFound, bool) {
 	dbrecord, found := s.Find(record.ID)
 	if found {
 		dbrecord.Retry += 1
 		dbrecord.UpdatedOn = time.Now()
 	} else {
-		dbrecord = db.NotFound{
+		dbrecord = dbmodel.NotFound{
 			ID:        record.ID,
 			Retry:     1,
 			CreatedOn: time.Now(),
@@ -88,7 +88,7 @@ func (s *NotFoundService) SaveOrUpdate(record csv.MobileDataError) (db.NotFound,
 	database := s.db_service.Connect()
 	result := database.Save(&dbrecord)
 	if result.Error != nil {
-		return db.NotFound{}, false
+		return dbmodel.NotFound{}, false
 	}
 	return dbrecord, true
 }

@@ -35,11 +35,17 @@ func (v *VehicleService) SaveAll(records []modelcsv.Record) error {
 		deepcopier.Copy(r).To(&vehicle)
 		return vehicle
 	})
+
 	db := v.db_service.Connect()
-	err := db.Create(&vehicles).Error
-	if err != nil {
-		return err
+	for _, vehicle := range vehicles {
+
+		err := db.Save(&vehicle).Error
+		if err != nil {
+			continue
+		}
+
 	}
+
 	return nil
 }
 

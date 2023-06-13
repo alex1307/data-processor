@@ -7,6 +7,7 @@ import (
 	dbservice "data-processor/internal/service/db"
 	"data-processor/utils"
 	"fmt"
+	"log"
 
 	"github.com/elliotchance/pie/v2"
 )
@@ -34,6 +35,7 @@ func ProcessCSVFiles(data_folder string) {
 	csv_errors_service.ReadFromFiles(error_files...)
 	record_service := csvservice.NewRecordService()
 	vehicles := record_service.GetRecords(listing_file, details_files)
+	log.Println("found records: {}", len(vehicles))
 	equipment_ids := dbservice.Map(vehicles, func(record modelcsv.Record) int32 {
 		return int32(record.Equipment)
 	})
