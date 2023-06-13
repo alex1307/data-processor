@@ -1,4 +1,4 @@
-package streams_utils
+package utils
 
 type filterFunc[A any] func(A) bool
 type mapFunc[A, B any] func(A) B

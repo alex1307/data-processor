@@ -4,6 +4,7 @@ import (
 	"data-processor/internal/connect"
 	csv "data-processor/internal/model/csv"
 	db "data-processor/internal/model/db"
+	dbmodel "data-processor/internal/model/db"
 	"log"
 	"time"
 )
@@ -23,6 +24,16 @@ func (s *NotFoundService) FindAllIn(ids []string) []db.NotFound {
 	db := s.db_service.Connect()
 	db.Where("id IN ?", ids).Find(&records)
 	return records
+}
+
+func (s *NotFoundService) Count() (int64, error) {
+	db := s.db_service.Connect()
+	var count int64
+	err := db.Model(&dbmodel.NotFound{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (s *NotFoundService) SaveAll(data []csv.MobileDataError) []db.NotFound {
@@ -48,7 +59,7 @@ func (s *NotFoundService) SaveAll(data []csv.MobileDataError) []db.NotFound {
 	}
 	log.Println("Saving ", len(new_records), " records...")
 	db := s.db_service.Connect()
-	db.Create(&new_records)
+	db.Save(&new_records)
 	return new_records
 }
 

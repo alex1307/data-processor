@@ -2,17 +2,13 @@ package gtests
 
 import (
 	csvservice "data-processor/internal/service/csv"
-	service "data-processor/internal/service/db"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	vehicle_service = service.NewVehicleService(db_service)
-)
-
 func TestVehicleService_CRUD(t *testing.T) {
+	ResetDB()
 	record_service := csvservice.NewRecordService()
 	list_file_names := []string{"../resources/test/listing.csv"}
 	details_file_names := []string{"../resources/test/details.csv"}

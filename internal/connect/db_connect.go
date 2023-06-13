@@ -12,6 +12,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 )
 
@@ -92,7 +93,9 @@ func ConnectToDatabase(config Config) Connect {
 
 	case "sqlite":
 
-		db, err = gorm.Open(sqlite.Open(connectionString), &gorm.Config{})
+		db, err = gorm.Open(sqlite.Open(connectionString), &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Silent),
+		})
 
 		// Migrate the database schema
 

@@ -3,19 +3,15 @@ package gtests
 import (
 	modelcsv "data-processor/internal/model/csv"
 	csvservice "data-processor/internal/service/csv"
-	service "data-processor/internal/service/db"
-	"log"
+
 	"testing"
 
 	"github.com/elliotchance/pie/v2"
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	not_found_service = service.NewNotFoundService(db_service)
-)
-
 func TestLoadNotFoundErrors(t *testing.T) {
+	ResetDB()
 	csv_not_found_service := csvservice.NewGenericCSVReaderService[modelcsv.MobileDataError]()
 	errors_filename := "../resources/test/errors.csv"
 	err := csv_not_found_service.ReadFromFiles(errors_filename)
@@ -30,7 +26,6 @@ func TestLoadNotFoundErrors(t *testing.T) {
 	saved := not_found_service.SaveAll(first_half)
 	counter := 0
 	for _, v := range saved {
-		log.Println("Saved: ", v)
 		if v.Retry == 1 {
 			counter++
 		}

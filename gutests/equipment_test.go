@@ -1,19 +1,12 @@
 package gtests
 
 import (
-	"data-processor/internal/connect"
 	csvservice "data-processor/internal/service/csv"
-	service "data-processor/internal/service/db"
 	"testing"
 
 	csv "data-processor/internal/model/csv"
 
 	"github.com/stretchr/testify/assert"
-)
-
-var (
-	db_service        = connect.GetDBService(connect.GetInMemoryConfig())
-	equipment_service = service.NewEquipmentService("../resources/config/equipment_config.yml", db_service)
 )
 
 func TestEquipmentService_GetEquipment(t *testing.T) {
@@ -33,6 +26,7 @@ func TestEquipmentService_GetEquipmentName(t *testing.T) {
 }
 
 func TestEquipmentService_CRUD(t *testing.T) {
+	ResetDB()
 	details_service := csvservice.NewGenericCSVReaderService[csv.Details]()
 	details_service.ReadFromFiles([]string{"../resources/test/details.csv"}...)
 	details := details_service.GetData()
@@ -43,7 +37,7 @@ func TestEquipmentService_CRUD(t *testing.T) {
 			equipment_ids = append(equipment_ids, int32(detail.Equipment))
 		}
 	}
-	first := equipment_ids[0]
+	first := int32(24029696)
 	assert.Equal(t, 79, len(equipment_ids))
 	saved := equipment_service.SaveAll(&equipment_ids)
 	assert.Equal(t, int32(69), saved)

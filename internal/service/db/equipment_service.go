@@ -13,6 +13,7 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ulule/deepcopier"
 	yaml "gopkg.in/yaml.v3"
+	"gorm.io/gorm"
 )
 
 var (
@@ -121,6 +122,13 @@ func (s *EquipmentService) Count() (int64, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+func (s *EquipmentService) DeleteAll() int32 {
+	db := s.db_service.Connect()
+	db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&dbmodel.Equipment{})
+
+	return 1
 }
 
 func (s *EquipmentService) FindEquipment(EquipmentID int32) (bool, dbmodel.Equipment) {
