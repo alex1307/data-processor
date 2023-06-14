@@ -3,9 +3,11 @@ package gtests
 import (
 	utils "data-processor/utils"
 	"fmt"
-	"testing"
-
+	"os/user"
+	"sort"
 	"strings"
+	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -26,6 +28,21 @@ func uppercaseString(s string) string {
 
 func lowercaseString(s string) string {
 	return string([]rune(s)[0]-'A'+'a') + s[1:]
+}
+
+func TestReadingLatestDataFirst(t *testing.T) {
+	currentUser, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+	DataDir := fmt.Sprintf("%s/%s", currentUser.HomeDir, "Software/release/Rust/scraper/resources/data")
+	details_files := utils.ReadFiles(DataDir, "details", "csv")
+	sort.Sort(utils.DescendingSort(details_files))
+	assert.True(t, len(details_files) > 0)
+	currentTime := time.Now()
+	Today := currentTime.Format("2006-01-02")
+	filename := fmt.Sprintf("%s/%s_%s.%s", DataDir, "details", Today, "csv")
+	assert.Equal(t, filename, details_files[0])
 }
 
 func TestStreamsUtils(t *testing.T) {
