@@ -29,3 +29,9 @@ func Reduce[A any](input []A, r reduceFunc[A], initial A) A {
 	}
 	return acc
 }
+
+type DescendingSort []string
+
+func (d DescendingSort) Len() int           { return len(d) }
+func (d DescendingSort) Less(i, j int) bool { return d[i] > d[j] }
+func (d DescendingSort) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }

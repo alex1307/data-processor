@@ -2,9 +2,11 @@ package service
 
 import (
 	csv "data-processor/internal/model/csv"
+	utils "data-processor/utils"
 	errors_api "errors"
 	"fmt"
 	"os"
+	"sort"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/gocarina/gocsv"
@@ -63,6 +65,7 @@ func (s *GenericCSVReaderService[T]) ReadFromFiles(filenames ...string) error {
 	ids := mapset.NewSet[string]()
 	all_details := make(map[string]T)
 	var errors []error
+	sort.Sort(utils.DescendingSort(filenames))
 	for _, filename := range filenames {
 		input, err := os.Open(filename)
 		if err != nil {
@@ -89,6 +92,10 @@ func (s *GenericCSVReaderService[T]) ReadFromFiles(filenames ...string) error {
 	s.keys = ids
 	err := joinErrors(errors)
 	return err
+}
+
+func DescendingSort(filenames []string) {
+	panic("unimplemented")
 }
 
 func (s *GenericCSVReaderService[T]) WriteToFile(filename string) error {
