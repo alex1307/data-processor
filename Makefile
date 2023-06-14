@@ -12,13 +12,15 @@ APP_DIR = /Users/$(USER)/Software/$(RELEASE_DIR)/GO/apps/data-processor
 # Build target
 
 
-all: clean install copy-apps
+all: clean test install copy-apps
 
 install:
 	go install ./cmd/processor
 	strip $(DEST_DIR)/processor
 clean:
 	go clean
+test:
+	go test -p 1 -count=1 ./gutests	
 
 copy-apps:
 	mkdir -p $(DEST_CONFIG_DIR)
