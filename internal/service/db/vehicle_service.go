@@ -4,6 +4,7 @@ import (
 	"data-processor/internal/connect"
 	modelcsv "data-processor/internal/model/csv"
 	dbmodel "data-processor/internal/model/db"
+	"data-processor/utils"
 
 	"github.com/ulule/deepcopier"
 )
@@ -33,6 +34,8 @@ func (v *VehicleService) SaveAll(records []modelcsv.Record) error {
 	vehicles := Map(records, func(r modelcsv.Record) dbmodel.Vehicle {
 		vehicle := dbmodel.Vehicle{}
 		deepcopier.Copy(r).To(&vehicle)
+		created_on := utils.ConvertDate(r.CreatedOn)
+		vehicle.CreatedOn = created_on
 		return vehicle
 	})
 

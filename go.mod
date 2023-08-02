@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/elliotchance/pie/v2 v2.6.0
-	github.com/gocarina/gocsv v0.0.0-20230513223533-9ddd7fd60602
+	github.com/gocarina/gocsv v0.0.0-20230614100527-2696de6cd848
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/stretchr/testify v1.8.4
 	gorm.io/driver/postgres v1.5.2
@@ -14,9 +14,10 @@ require (
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgx/v5 v5.3.1 // indirect
+	github.com/jackc/pgx/v5 v5.4.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 )
 
 require (
