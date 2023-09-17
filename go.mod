@@ -1,6 +1,6 @@
 module data-processor
 
-go 1.20
+go 1.21
 
 require (
 	github.com/elliotchance/pie/v2 v2.8.0
@@ -17,6 +17,7 @@ require (
 	github.com/jackc/pgx/v5 v5.4.3 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 )
 
 require (
