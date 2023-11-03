@@ -12,7 +12,7 @@ func ReadFiles(folder string, file_name string, extension string) []string {
 	dates := getDatesInRange("2023-05-15", formattedDate)
 	files := []string{}
 	for _, date := range dates {
-		filename := fmt.Sprintf("%s/%s_%s.%s", folder, file_name, date, extension)
+		filename := fmt.Sprintf("%s/%s-%s.%s", folder, file_name, date, extension)
 		_, err := os.Stat(filename)
 		if !os.IsNotExist(err) {
 			files = append(files, filename)

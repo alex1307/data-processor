@@ -25,8 +25,8 @@ func NewRecordService() {
 	panic("unimplemented")
 }
 
-func (s *DataService) ProcessCSVFiles(list_file_names []string, details_file_names []string) error {
-	records := s.record_service.GetRecords(list_file_names, details_file_names)
+func (s *DataService) ProcessCSVFiles(records_file_names []string) error {
+	records := s.record_service.GetRecords(records_file_names)
 	s.vehicle_service.SaveAll(records)
 	equipment_ids := Map(records, func(record csv.Record) int32 {
 		return int32(record.Equipment)
@@ -39,6 +39,16 @@ func Map[T any, U any](input []T, mapper func(T) U) []U {
 	result := make([]U, len(input))
 	for i, v := range input {
 		result[i] = mapper(v)
+	}
+	return result
+}
+
+func Filter[T any](input []T, predicate func(T) bool) []T {
+	result := make([]T, 0)
+	for _, v := range input {
+		if predicate(v) {
+			result = append(result, v)
+		}
 	}
 	return result
 }

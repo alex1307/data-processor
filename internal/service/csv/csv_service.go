@@ -2,6 +2,7 @@ package service
 
 import (
 	csv "data-processor/internal/model/csv"
+	modelcsv "data-processor/internal/model/csv"
 	utils "data-processor/utils"
 	errors_api "errors"
 	"fmt"
@@ -13,7 +14,7 @@ import (
 )
 
 type GenericCSVReaderService[T csv.Identity] struct {
-	data map[string]T
+	data []T
 	keys mapset.Set[string]
 }
 
@@ -21,7 +22,7 @@ func NewGenericCSVReaderService[T csv.Identity]() *GenericCSVReaderService[T] {
 	return &GenericCSVReaderService[T]{}
 }
 
-func (s *GenericCSVReaderService[T]) GetData() map[string]T {
+func (s *GenericCSVReaderService[T]) GetData() []T {
 	return s.data
 }
 
@@ -29,42 +30,9 @@ func (s *GenericCSVReaderService[T]) GetIdentities() mapset.Set[string] {
 	return s.keys
 }
 
-func (s *GenericCSVReaderService[T]) Intersection(other mapset.Set[string]) mapset.Set[string] {
-	intersection := mapset.NewSet[string]()
-	for _, record := range other.ToSlice() {
-		if s.keys.Contains(record) {
-			intersection.Add(record)
-		}
-	}
-	return intersection
-}
-
-func (s *GenericCSVReaderService[T]) NotFound(other mapset.Set[string]) mapset.Set[string] {
-
-	not_found := mapset.NewSet[string]()
-	for _, record := range other.ToSlice() {
-		if !s.keys.Contains(record) {
-			not_found.Add(record)
-		}
-	}
-	return not_found
-}
-
-func (s *GenericCSVReaderService[T]) LoadFromSlice(source []T) {
-	data := make(map[string]T)
-	keys := mapset.NewSet[string]()
-	for _, record := range source {
-		data[record.GetID()] = record
-		keys.Add(record.GetID())
-	}
-	s.data = data
-	s.keys = keys
-}
-
 func (s *GenericCSVReaderService[T]) ReadFromFiles(filenames ...string) error {
-	ids := mapset.NewSet[string]()
-	all_details := make(map[string]T)
 	var errors []error
+	var all_details = []T{}
 	sort.Sort(utils.DescendingSort(filenames))
 	for _, filename := range filenames {
 		input, err := os.Open(filename)
@@ -79,17 +47,13 @@ func (s *GenericCSVReaderService[T]) ReadFromFiles(filenames ...string) error {
 			errors = append(errors, err)
 			continue
 		}
-		for _, record := range details {
-			if !ids.Contains(record.GetID()) {
-				all_details[record.GetID()] = record
-			}
-			ids.Add(record.GetID())
+		for _, detail := range details {
+			all_details = append(all_details, detail)
 		}
 		fmt.Println("Successfully read data from file: ", filename)
 		defer input.Close()
 	}
 	s.data = all_details
-	s.keys = ids
 	err := joinErrors(errors)
 	return err
 }
@@ -111,6 +75,15 @@ func (s *GenericCSVReaderService[T]) WriteToFile(filename string) error {
 	return gocsv.MarshalFile(&details, file)
 }
 
+func WriteToCSVFile(filename string, ids []modelcsv.Advert) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return gocsv.MarshalFile(&ids, file)
+}
+
 func joinErrors(errors []error) error {
 	var errStr string
 	for _, err := range errors {
@@ -122,46 +95,12 @@ func joinErrors(errors []error) error {
 	return errors_api.New(errStr[:len(errStr)-2])
 }
 
-func Process(listing_file string, details_file ...string) ([]csv.Record, error) {
-	listing := NewGenericCSVReaderService[csv.Listing]()
-	details := NewGenericCSVReaderService[csv.Details]()
-	err := listing.ReadFromFiles(listing_file)
+func Process(records_file ...string) ([]csv.Record, error) {
+	record_service := NewGenericCSVReaderService[csv.Record]()
+	err := record_service.ReadFromFiles(records_file...)
 	if err != nil {
 		return nil, err
 	}
-	err = details.ReadFromFiles(details_file...)
-	if err != nil {
-		return nil, err
-	}
-
-	details_ids := details.GetIdentities()
-	listing_data := listing.GetData()
-	details_data := details.GetData()
-	intersection := listing.Intersection(details_ids)
-	var records []csv.Record
-	for _, id := range intersection.ToSlice() {
-		listing_record := listing_data[id]
-		details_record := details_data[id]
-		record := csv.Record{
-			ID:        listing_record.ID,
-			Model:     listing_record.Model,
-			Millage:   listing_record.Millage,
-			Engine:    details_record.Engine,
-			Gearbox:   details_record.Gearbox,
-			Power:     details_record.Power,
-			Year:      listing_record.Year,
-			Currency:  listing_record.Currency,
-			Price:     listing_record.Price,
-			Phone:     details_record.Phone,
-			ViewCount: details_record.ViewCount,
-			Equipment: details_record.Equipment,
-			Make:      listing_record.Make,
-			Promoted:  listing_record.Promoted,
-			Sold:      listing_record.Sold,
-			Source:    listing_record.Source,
-			CreatedOn: listing_record.CreatedOn,
-		}
-		records = append(records, record)
-	}
+	records := record_service.GetData()
 	return records, nil
 }
