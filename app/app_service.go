@@ -35,8 +35,8 @@ func ProcessCSVFiles(data_folder string) {
 		search_service.SaveAll(searches)
 	}
 
-	// records_files := fmt.Sprintf("%s/%s-%s", data_folder, "vehicle.csv", time.Now().Format("2006-01-02"))
-	records_files := fmt.Sprintf("%s/%s", data_folder, "vehicle-2023-11-02.csv")
+	records_files := fmt.Sprintf("%s/%s-%s.csv", data_folder, "vehicle", time.Now().Format("2006-01-02"))
+	//records_files := fmt.Sprintf("%s/%s", data_folder, "vehicle-{}.csv")
 	log.Println("found vehicles files: {}", records_files)
 	record_service := csvservice.NewRecordService()
 	vehicles := record_service.GetRecords([]string{records_files})
