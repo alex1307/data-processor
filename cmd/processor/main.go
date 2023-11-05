@@ -24,7 +24,12 @@ func main() {
 	}
 	DataDir := fmt.Sprintf("%s/%s", currentUser.HomeDir, "Software/release/Rust/scraper/resources/data")
 	log.Println("Working data directory: ", DataDir)
-	app.ProcessCSVFiles(DataDir)
+	if len(os.Args) < 2 {
+		log.Println("No file name provided. Processing all files in the data directory")
+		app.ProcessCSVFiles(DataDir, "")
+	} else {
+		app.ProcessCSVFiles(DataDir, os.Args[1])
+	}
 }
 
 func runMemProfile() {

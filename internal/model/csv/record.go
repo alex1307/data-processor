@@ -4,20 +4,23 @@ type Record struct {
 	ID        string `csv:"id"`
 	Make      string `csv:"make"`
 	Model     string `csv:"model"`
-	Millage   int    `csv:"millage"`
+	Millage   int32  `csv:"millage"`
 	Engine    string `csv:"engine"`
 	Gearbox   string `csv:"gearbox"`
-	Power     int    `csv:"power"`
-	Year      int    `csv:"year"`
+	Power     int32  `csv:"power"`
+	Year      int32  `csv:"year"`
 	Currency  string `csv:"currency"`
 	Price     int32  `csv:"price"`
 	Phone     string `csv:"phone"`
-	ViewCount int    `csv:"view_count"`
+	Location  string `csv:"location"`
+	ViewCount int32  `csv:"view_count"`
 	Equipment int64  `csv:"equipment"`
-	Promoted  bool   `csv:"promoted"`
+	Top       bool   `csv:"top"`
+	VIP       bool   `csv:"vip"`
 	Sold      bool   `csv:"sold"`
-	Source    string `csv:"dealer"`
+	Dealer    bool   `csv:"dealer"`
 	CreatedOn string `csv:"created_on"`
+	UpdatedOn string `csv:"updated_on"`
 }
 
 func (s Record) GetID() string {

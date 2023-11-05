@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elliotchance/pie/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,16 +16,11 @@ func TestProcessCSVFiles(t *testing.T) {
 	model := myModel()
 	db.Model(&model).Delete(&model)
 
-	list_files := []string{
-		"../resources/test/listing.csv"}
-	details_files := []string{
-		"../resources/test/details.csv"}
-	error_files := []string{
-		"../resources/test/errors.csv"}
-	csv_error_service := csvservice.NewGenericCSVReaderService[modelcsv.MobileDataError]()
-	csv_error_service.ReadFromFiles(error_files...)
+	records_files := []string{
+		"../resources/test/records.csv"}
+
 	record_service := csvservice.NewRecordService()
-	vehicles := record_service.GetRecords(list_files, details_files)
+	vehicles := record_service.GetRecords(records_files)
 	time.Sleep(1 * time.Second)
 	vehicle_service.SaveAll(vehicles)
 	count, _ := vehicle_service.Count()
@@ -49,10 +43,5 @@ func TestProcessCSVFiles(t *testing.T) {
 	assert.Equal(t, int32(57), saved)
 	count, _ = equipment_service.Count()
 	assert.Equal(t, int64(57), count)
-	values := pie.Values(csv_error_service.GetData())
-	assert.Equal(t, len(values), 420)
-	not_found_service.SaveAll(values)
-	count, _ = not_found_service.Count()
-	assert.Equal(t, int64(420), count)
 
 }

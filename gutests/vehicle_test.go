@@ -12,10 +12,9 @@ import (
 func TestVehicleService_CRUD(t *testing.T) {
 	ResetDB()
 	record_service := csvservice.NewRecordService()
-	list_file_names := []string{"../resources/test/listing.csv"}
-	details_file_names := []string{"../resources/test/details.csv"}
-	records := record_service.GetRecords(list_file_names, details_file_names)
-	assert.Equal(t, 67, len(records))
+	records_file_names := []string{"../resources/test/records.csv"}
+	records := record_service.GetRecords(records_file_names)
+	assert.Equal(t, 100, len(records))
 	filtered := utils.Filter(records, func(r modelcsv.Record) bool {
 		return r.ID == "11650623703838993"
 	})

@@ -11,14 +11,12 @@ var (
 	db_service        = connect.GetDBService(connect.GetInMemoryConfig())
 	equipment_service = service.NewEquipmentService("../resources/config/equipment_config.yml", db_service)
 	vehicle_service   = service.NewVehicleService(db_service)
-	not_found_service = service.NewNotFoundService(db_service)
 )
 
 func myModel() []interface{} {
 	return []interface{}{
-		&dbmodel.NotFound{},
-		&dbmodel.Status{},
-		&dbmodel.Vehicle{},
+		&dbmodel.Searches{},
+		&dbmodel.VehicleRecord{},
 		&dbmodel.Equipment{},
 	}
 }

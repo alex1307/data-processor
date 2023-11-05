@@ -27,10 +27,10 @@ func TestEquipmentService_GetEquipmentName(t *testing.T) {
 
 func TestEquipmentService_CRUD(t *testing.T) {
 	ResetDB()
-	details_service := csvservice.NewGenericCSVReaderService[csv.Details]()
-	details_service.ReadFromFiles([]string{"../resources/test/details.csv"}...)
+	details_service := csvservice.NewGenericCSVReaderService[csv.Record]()
+	details_service.ReadFromFiles([]string{"../resources/test/records.csv"}...)
 	details := details_service.GetData()
-	assert.Equal(t, 81, len(details))
+	assert.Equal(t, 100, len(details))
 	var equipment_ids []int32
 	for _, detail := range details {
 		if detail.Equipment > 0 {
