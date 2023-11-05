@@ -5,7 +5,6 @@ import (
 	modelcsv "data-processor/internal/model/csv"
 	dbmodel "data-processor/internal/model/db"
 	"data-processor/utils"
-	"time"
 
 	"github.com/ulule/deepcopier"
 )
@@ -36,22 +35,9 @@ func (v *VehicleService) SaveAll(records []modelcsv.Record) error {
 		vehicle := dbmodel.VehicleRecord{}
 		deepcopier.Copy(r).To(&vehicle)
 		vehicle.CreatedOn = utils.ConvertDate(r.CreatedOn)
+		vehicle.UpdatedOn = utils.ConvertDate(r.UpdatedOn)
 		return vehicle
 	})
-
-	existing_vehicles, err := v.GetVehicles()
-	if err == nil {
-		for _, vehicle := range new_vehicles {
-			for _, existing_vehicle := range existing_vehicles {
-				if vehicle.ID == existing_vehicle.ID {
-					vehicle.CreatedOn = existing_vehicle.CreatedOn
-					vehicle.UpdatedOn = time.Now()
-					break
-				}
-			}
-		}
-
-	}
 
 	db := v.db_service.Connect()
 	for _, vehicle := range new_vehicles {

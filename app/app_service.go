@@ -26,7 +26,7 @@ func init() {
 	equipment_service = dbservice.NewEquipmentService("resources/config/equipment_config.yml", db_service)
 }
 
-func ProcessCSVFiles(data_folder string) {
+func ProcessCSVFiles(data_folder string, file_name string) {
 	metadata_file_name := fmt.Sprintf("%s/%s", data_folder, "meta_data.csv")
 	csv_searches := csvservice.NewGenericCSVReaderService[modelcsv.SearchMetadata]()
 	err := csv_searches.ReadFromFiles(metadata_file_name)
@@ -34,12 +34,17 @@ func ProcessCSVFiles(data_folder string) {
 		searches := csv_searches.GetData()
 		search_service.SaveAll(searches)
 	}
+	var data_file_name string
+	if file_name == "" {
+		data_file_name = fmt.Sprintf("%s/%s-%s.csv", data_folder, "vehicle", time.Now().Format("2006-01-02"))
+	} else {
+		data_file_name = fmt.Sprintf("%s/%s", data_folder, file_name)
+	}
 
-	records_files := fmt.Sprintf("%s/%s-%s.csv", data_folder, "vehicle", time.Now().Format("2006-01-02"))
 	//records_files := fmt.Sprintf("%s/%s", data_folder, "vehicle-{}.csv")
-	log.Println("found vehicles files: {}", records_files)
+	log.Println("found vehicles files: {}", data_file_name)
 	record_service := csvservice.NewRecordService()
-	vehicles := record_service.GetRecords([]string{records_files})
+	vehicles := record_service.GetRecords([]string{data_file_name})
 	existing_vehicles, err := vehicle_service.GetVehicles()
 	if err == nil {
 		for _, vehicle := range vehicles {
