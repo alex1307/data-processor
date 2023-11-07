@@ -110,7 +110,12 @@ func ConnectToDatabase(config Config) Connect {
 		&dbmodel.Searches{},
 		&dbmodel.VehicleRecord{},
 		&dbmodel.Equipment{},
-		&dbmodel.VehicleLog{})
+		&dbmodel.VehicleLog{},
+		&dbmodel.EquipmentAuditLog{},
+		&dbmodel.ViewCountAuditLog{},
+		&dbmodel.PriceAuditLog{},
+		&dbmodel.UpdatedOnAuditLog{},
+	)
 	if err != nil {
 		log.Panicln("Failed to migrate database", err)
 		panic("failed to sync with database")
