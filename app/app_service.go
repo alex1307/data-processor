@@ -7,15 +7,19 @@ import (
 	csvservice "data-processor/internal/service/csv"
 	service "data-processor/internal/service/csv"
 	dbservice "data-processor/internal/service/db"
+	"data-processor/utils"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/ulule/deepcopier"
 )
 
 var (
 	vehicle_service   *dbservice.VehicleService
 	search_service    *dbservice.SearchService
 	equipment_service *dbservice.EquipmentService
+	audit_service     *dbservice.AuditService
 )
 
 func init() {
@@ -24,6 +28,7 @@ func init() {
 	search_service = dbservice.NewSearchService(db_service)
 	vehicle_service = dbservice.NewVehicleService(db_service)
 	equipment_service = dbservice.NewEquipmentService("resources/config/equipment_config.yml", db_service)
+	audit_service = dbservice.NewAuditService(db_service.Connect())
 }
 
 func ProcessCSVFiles(data_folder string, file_name string) {
@@ -45,17 +50,14 @@ func ProcessCSVFiles(data_folder string, file_name string) {
 	log.Println("found vehicles files: {}", data_file_name)
 	record_service := csvservice.NewRecordService()
 	vehicles := record_service.GetRecords([]string{data_file_name})
-	existing_vehicles, err := vehicle_service.GetVehicles()
-	if err == nil {
-		for _, vehicle := range vehicles {
-			for _, existing_vehicle := range existing_vehicles {
-				if vehicle.ID == existing_vehicle.ID {
-					vehicle.UpdatedOn = time.Now().Format("2006-01-02")
-					break
-				}
-			}
-		}
-	}
+	records := dbservice.Map(vehicles, func(source modelcsv.Record) dbmodel.VehicleRecord {
+		vehicle := dbmodel.VehicleRecord{}
+		deepcopier.Copy(source).To(&vehicle)
+		vehicle.CreatedOn = utils.ConvertDate(source.CreatedOn)
+		vehicle.UpdatedOn = utils.ConvertDate(source.UpdatedOn)
+		return vehicle
+	})
+	existing_vehicles, _ := vehicle_service.GetVehicles()
 
 	join := dbservice.Filter(existing_vehicles, func(record dbmodel.VehicleRecord) bool {
 		for _, vehicle := range vehicles {
@@ -78,6 +80,11 @@ func ProcessCSVFiles(data_folder string, file_name string) {
 	})
 	if len(equipment_ids) > 0 {
 		equipment_service.SaveAll(&equipment_ids)
+	}
+
+	if len(records) > 0 {
+		log.Println("auditing records: {}", len(records))
+		audit_service.AuditAll(records)
 	}
 
 	if len(vehicles) > 0 {
