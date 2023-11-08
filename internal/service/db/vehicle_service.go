@@ -5,6 +5,7 @@ import (
 	modelcsv "data-processor/internal/model/csv"
 	dbmodel "data-processor/internal/model/db"
 	"data-processor/utils"
+	"time"
 
 	"github.com/ulule/deepcopier"
 )
@@ -40,11 +41,16 @@ func (v *VehicleService) SaveAll(records []modelcsv.Record) error {
 	})
 
 	db := v.db_service.Connect()
+	counter := 0
 	for _, vehicle := range new_vehicles {
 
 		err := db.Save(&vehicle).Error
 		if err != nil {
 			continue
+		}
+		counter++
+		if counter%1000 == 0 {
+			time.Sleep(2 * time.Second)
 		}
 	}
 	return nil
@@ -88,4 +94,17 @@ func (v *VehicleService) Count() (int64, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+func (v *VehicleService) GetDataForUpdate() ([]dbmodel.VehicleRecord, error) {
+	vehicles := []dbmodel.VehicleRecord{}
+	db := v.db_service.Connect()
+	today := time.Now()
+	day_before := time.Date(today.Year(), today.Month(), today.Day()-1, 0, 0, 0, 0, time.UTC)
+	err := db.Where("deleted_on is not null AND created_on <= {}", day_before).Find(&vehicles).Error
+	if err != nil {
+		return vehicles, err
+	}
+
+	return vehicles, nil
 }
