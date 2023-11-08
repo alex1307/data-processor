@@ -39,7 +39,7 @@ func ProcessMetaSearches(file_name string) {
 	}
 }
 
-func GenerateUpdateList(file_name string, vehicle_service *dbservice.VehicleService) {
+func GenerateUpdateList(file_name string) {
 	vehicles, err := vehicle_service.GetDataForUpdate()
 
 	if err != nil {
@@ -52,7 +52,7 @@ func GenerateUpdateList(file_name string, vehicle_service *dbservice.VehicleServ
 	csvservice.WriteToCSVFile(file_name, ids)
 }
 
-func ProcessRecords(file_name string, vehicle_service *dbservice.VehicleService) {
+func ProcessRecords(file_name string) {
 	record_service := csvservice.NewRecordService()
 	vehicles := record_service.GetRecords([]string{file_name})
 	if len(vehicles) > 0 {
@@ -60,7 +60,7 @@ func ProcessRecords(file_name string, vehicle_service *dbservice.VehicleService)
 	}
 }
 
-func AuditLog(file_name string, audit_service *dbservice.AuditService) {
+func AuditLog(file_name string) {
 	record_service := csvservice.NewRecordService()
 	vehicles := record_service.GetRecords([]string{file_name})
 	records := dbservice.Map(vehicles, func(source modelcsv.Record) dbmodel.VehicleRecord {
@@ -75,7 +75,7 @@ func AuditLog(file_name string, audit_service *dbservice.AuditService) {
 	}
 }
 
-func ProcessEquipments(file_name string, equipment_service *dbservice.EquipmentService) {
+func ProcessEquipments(file_name string) {
 	record_service := csvservice.NewRecordService()
 	vehicles := record_service.GetRecords([]string{file_name})
 	equipments := dbservice.Map(vehicles, func(source modelcsv.Record) int64 {
@@ -85,6 +85,15 @@ func ProcessEquipments(file_name string, equipment_service *dbservice.EquipmentS
 		inserted := equipment_service.SaveAll(&equipments)
 		log.Println("inserted equipments: {}", inserted)
 	}
+}
+
+func AddNewVehicles(data_dir, meta_search_file_name string, source_file_name string) {
+	meta_file_name := utils.FileName(data_dir, meta_search_file_name)
+	records_file_name := utils.FileName(data_dir, source_file_name)
+	ProcessMetaSearches(meta_file_name)
+	ProcessRecords(records_file_name)
+	ProcessEquipments(records_file_name)
+
 }
 
 func ProcessCSVFiles(data_folder string, file_name string) {

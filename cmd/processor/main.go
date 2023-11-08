@@ -1,6 +1,7 @@
 package main
 
 import (
+	"data-processor/app"
 	"flag"
 	"log"
 	"os"
@@ -22,12 +23,12 @@ func main() {
 
 	add := flag.NewFlagSet("add", flag.ExitOnError)
 	addFileName := add.String("source", "", "Vehicle csv source file name")
-	metaDataFileName := add.String("meta-data", "", "Search meta-data source file name")
-	newDataDirName := update.String("dir", "", "File directory name")
+	metaDataFileName := add.String("meta-data", "meta_data.csv", "Search meta-data source file name")
+	newDataDirName := add.String("dir", "", "File directory name")
 
 	delete := flag.NewFlagSet("delete", flag.ExitOnError)
 	deleteFileName := delete.String("source", "", "Vehicle csv source file name")
-	deletedFilesDirName := update.String("dir", "", "File directory name")
+	deletedFilesDirName := delete.String("dir", "", "File directory name")
 	if len(os.Args) < 2 {
 
 	} else if os.Args[1] == "update" {
@@ -39,6 +40,7 @@ func main() {
 		log.Println("New vehicles file name: ", *addFileName)
 		log.Println("Meta data file name: ", *metaDataFileName)
 		log.Println("New vehicles directory: ", *newDataDirName)
+		app.AddNewVehicles(*newDataDirName, *metaDataFileName, *addFileName)
 	} else if os.Args[1] == "delete" {
 		delete.Parse(os.Args[2:])
 		log.Println("Deleted vehicles file name: ", *deleteFileName)
