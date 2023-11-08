@@ -34,8 +34,8 @@ func TestProcessCSVFiles(t *testing.T) {
 	count, _ = equipment_service.Count()
 	assert.Equal(t, int64(0), count)
 
-	equipment_ids := service.Map(vehicles, func(record modelcsv.Record) int32 {
-		return int32(record.Equipment)
+	equipment_ids := service.Map(vehicles, func(record modelcsv.Record) int64 {
+		return record.Equipment
 	})
 	assert.Equal(t, 67, len(equipment_ids))
 	saved := equipment_service.SaveAll(&equipment_ids)

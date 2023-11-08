@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	modelcsv "data-processor/internal/model/csv"
 	dbmodel "data-processor/internal/model/db"
 	"log"
 	"sync"
@@ -10,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const numWorkers = 6 // or whatever number is sensible for your system
+const numWorkers = 8 // or whatever number is sensible for your system
 
 type AuditService struct {
 	db *gorm.DB
@@ -24,7 +25,54 @@ func NewAuditService(db_service *gorm.DB) *AuditService {
 
 func (a *AuditService) AuditAll(records []dbmodel.VehicleRecord) {
 	log.Println("auditing changes for all records")
-	execute(records, a.db)
+	executeUpdate(records, a.db)
+}
+
+func (a *AuditService) LogDeleted(deletedIds []modelcsv.Advert) {
+	log.Println("auditing changes for all records")
+	counter := 0
+	for _, deletedId := range deletedIds {
+		deleted := dbmodel.DeletedOnAuditLog{
+			ADVERT_ID: deletedId.GetID(),
+			DeletedOn: time.Now(),
+		}
+		err := a.db.Save(&deleted).Error
+		if condition := err != nil; condition {
+			log.Println(err)
+			continue
+		}
+		counter++
+		if counter%1000 == 0 {
+			log.Println("deleted ", counter, " records")
+			time.Sleep(1 * time.Second)
+		}
+		record := a.db.Where("id = ?", deletedId.GetID()).Find(&dbmodel.VehicleRecord{})
+		if record.Error != nil {
+			log.Println(record.Error)
+			continue
+		} else {
+			if record.RowsAffected == 0 {
+				continue
+			}
+			deleted_record := dbmodel.VehicleRecord{}
+			err := record.First(&deleted_record).Error
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			if deleted_record == (dbmodel.VehicleRecord{}) {
+				continue
+			}
+			deleted_record.DeletedOn = time.Now()
+			err = a.db.Save(&deleted_record).Error
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+		}
+
+	}
+
 }
 
 func processRecord(new_record dbmodel.VehicleRecord, db *gorm.DB) {
@@ -110,7 +158,7 @@ func worker(ctx context.Context, id int, records <-chan dbmodel.VehicleRecord, w
 	}
 }
 
-func execute(records []dbmodel.VehicleRecord, db *gorm.DB) {
+func executeUpdate(records []dbmodel.VehicleRecord, db *gorm.DB) {
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -120,9 +168,14 @@ func execute(records []dbmodel.VehicleRecord, db *gorm.DB) {
 		wg.Add(1)
 		go worker(ctx, i, recordsChannel, &wg, db)
 	}
-
+	counter := 0
 	for _, record := range records {
 		recordsChannel <- record
+		counter++
+		if counter%1000 == 0 {
+			log.Println("audited ", counter, " records")
+			time.Sleep(2 * time.Second)
+		}
 	}
 
 	time.AfterFunc(15*time.Second, func() {

@@ -31,10 +31,10 @@ func TestEquipmentService_CRUD(t *testing.T) {
 	details_service.ReadFromFiles([]string{"../resources/test/records.csv"}...)
 	details := details_service.GetData()
 	assert.Equal(t, 100, len(details))
-	var equipment_ids []int32
+	var equipment_ids []int64
 	for _, detail := range details {
 		if detail.Equipment > 0 {
-			equipment_ids = append(equipment_ids, int32(detail.Equipment))
+			equipment_ids = append(equipment_ids, detail.Equipment)
 		}
 	}
 	first := int32(24029696)

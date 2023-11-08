@@ -2,9 +2,46 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"os/user"
 	"time"
 )
+
+const DEFAULT_VEHICLE_FILE_NAME = "vehicle"
+const DEFAULT_WORKING_DIR = "Software/release/Rust/scraper/resources/data"
+
+func FileName(dir_name string, file_name string) string {
+	var working_dir string
+	if dir_name == "" {
+		currentUser, err := user.Current()
+		if err != nil {
+			panic(err)
+		}
+		working_dir = fmt.Sprintf("%s/%s", currentUser.HomeDir, DEFAULT_WORKING_DIR)
+	}
+	_, err := os.Stat(working_dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Println("Directory Does not exists. {}", working_dir)
+			panic(err)
+		}
+	}
+	var working_file_name string
+	if file_name == "" {
+		working_file_name = fmt.Sprintf("%s/%s-%s.csv", working_dir, DEFAULT_VEHICLE_FILE_NAME, time.Now().Format("2006-01-02"))
+	} else {
+		working_file_name = fmt.Sprintf("%s/%s", working_dir, file_name)
+	}
+	_, err = os.Stat(working_file_name)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Println("File name {} not exists.", working_file_name)
+			panic(err)
+		}
+	}
+	return working_file_name
+}
 
 func ReadFiles(folder string, file_name string, extension string) []string {
 	currentTime := time.Now()
