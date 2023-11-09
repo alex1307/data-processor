@@ -60,9 +60,6 @@ func (a *AuditService) LogDeleted(deletedIds []modelcsv.Advert) {
 				log.Println(err)
 				continue
 			}
-			if deleted_record == (dbmodel.VehicleRecord{}) {
-				continue
-			}
 			deleted_record.DeletedOn = time.Now()
 			err = a.db.Save(&deleted_record).Error
 			if err != nil {
@@ -75,16 +72,11 @@ func (a *AuditService) LogDeleted(deletedIds []modelcsv.Advert) {
 
 }
 
-func processRecord(new_record dbmodel.VehicleRecord, db *gorm.DB) {
+func saveAndAuditRecord(new_record dbmodel.VehicleRecord, db *gorm.DB) {
 	old_record := dbmodel.VehicleRecord{}
 	err := db.First(&old_record, new_record.ID).Error
 	if err != nil {
-		return
-	}
-	if err != nil {
-		return
-	}
-	if old_record == (dbmodel.VehicleRecord{}) {
+		db.Save(&new_record)
 		return
 	}
 	if old_record.Price != new_record.Price {
@@ -141,6 +133,9 @@ func processRecord(new_record dbmodel.VehicleRecord, db *gorm.DB) {
 			log.Println(err)
 		}
 	}
+
+	db.Save(&new_record)
+
 }
 
 func worker(ctx context.Context, id int, records <-chan dbmodel.VehicleRecord, wg *sync.WaitGroup, db *gorm.DB) {
@@ -151,7 +146,7 @@ func worker(ctx context.Context, id int, records <-chan dbmodel.VehicleRecord, w
 			if !ok {
 				return
 			}
-			processRecord(record, db)
+			saveAndAuditRecord(record, db)
 		case <-ctx.Done():
 			return
 		}

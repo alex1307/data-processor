@@ -9,7 +9,7 @@ import (
 	"data-processor/utils"
 	"fmt"
 	"log"
-	"time"
+	"os"
 
 	"github.com/ulule/deepcopier"
 )
@@ -39,7 +39,20 @@ func ProcessMetaSearches(file_name string) {
 	}
 }
 
-func GenerateUpdateList(file_name string) {
+func GenerateUpdateList(dir_name string, file_name string) {
+
+	_, err := os.Stat(dir_name)
+	if err != nil {
+		if os.IsNotExist(err) {
+
+			//create directory
+			log.Println("Directory Does not exists and will be created. {}", dir_name)
+			os.Mkdir(dir_name, 0755)
+		}
+	}
+
+	forUpdateFileName := fmt.Sprintf("%s/%s", dir_name, file_name)
+
 	vehicles, err := vehicle_service.GetDataForUpdate()
 
 	if err != nil {
@@ -49,20 +62,61 @@ func GenerateUpdateList(file_name string) {
 	ids := dbservice.Map(vehicles, func(v dbmodel.VehicleRecord) modelcsv.Advert {
 		return modelcsv.Advert{ID: v.ID}
 	})
-	csvservice.WriteToCSVFile(file_name, ids)
+	csvservice.WriteToCSVFile(forUpdateFileName, ids)
 }
 
 func ProcessRecords(file_name string) {
 	record_service := csvservice.NewRecordService()
 	vehicles := record_service.GetRecords([]string{file_name})
+
+	var slice_of_100_records = make([]modelcsv.Record, 0, 100)
+	var records_for_audit = make([]dbmodel.VehicleRecord, 0, len(vehicles))
+	counter := 0
+	for _, vehicle := range vehicles {
+		slice_of_100_records = append(slice_of_100_records, vehicle)
+		counter++
+		if counter%100 == 0 {
+			for_audit := audit_100_records(slice_of_100_records)
+			records_for_audit = append(records_for_audit, for_audit...)
+			slice_of_100_records = make([]modelcsv.Record, 0, 100)
+		}
+	}
+	audit_service.AuditAll(records_for_audit)
 	if len(vehicles) > 0 {
 		vehicle_service.SaveAll(vehicles)
 	}
 }
 
+func audit_100_records(slice_of_100_records []modelcsv.Record) []dbmodel.VehicleRecord {
+	ids := dbservice.Map(slice_of_100_records, func(v modelcsv.Record) string {
+		return v.ID
+	})
+	vehicles, err := vehicle_service.FindByListOfIds(ids)
+
+	if err != nil {
+		log.Println("Failed reading data from database: {}", err)
+		return []dbmodel.VehicleRecord{}
+	}
+
+	for _, vehicle := range vehicles {
+		for _, record := range slice_of_100_records {
+			if vehicle.ID == record.ID {
+				deepcopier.Copy(record).To(&vehicle)
+				vehicle.UpdatedOn = utils.ConvertDate(record.UpdatedOn)
+			}
+		}
+	}
+
+	return vehicles
+}
+
 func AuditLog(file_name string) {
 	record_service := csvservice.NewRecordService()
 	vehicles := record_service.GetRecords([]string{file_name})
+	auditRecords(vehicles)
+}
+
+func auditRecords(vehicles []modelcsv.Record) {
 	records := dbservice.Map(vehicles, func(source modelcsv.Record) dbmodel.VehicleRecord {
 		vehicle := dbmodel.VehicleRecord{}
 		deepcopier.Copy(source).To(&vehicle)
@@ -75,7 +129,7 @@ func AuditLog(file_name string) {
 	}
 }
 
-func ProcessEquipments(file_name string) {
+func processEquipments(file_name string) {
 	record_service := csvservice.NewRecordService()
 	vehicles := record_service.GetRecords([]string{file_name})
 	equipments := dbservice.Map(vehicles, func(source modelcsv.Record) int64 {
@@ -87,78 +141,22 @@ func ProcessEquipments(file_name string) {
 	}
 }
 
+func UpdateVehicles(data_dir string, file_name string) {
+	source_file_name := utils.FileName(data_dir, file_name)
+	AuditLog(source_file_name)
+	processEquipments(source_file_name)
+}
+
 func AddNewVehicles(data_dir, meta_search_file_name string, source_file_name string) {
 	meta_file_name := utils.FileName(data_dir, meta_search_file_name)
 	records_file_name := utils.FileName(data_dir, source_file_name)
 	ProcessMetaSearches(meta_file_name)
-	ProcessRecords(records_file_name)
-	ProcessEquipments(records_file_name)
-
+	AuditLog(records_file_name)
+	processEquipments(records_file_name)
 }
 
-func ProcessCSVFiles(data_folder string, file_name string) {
-	metadata_file_name := fmt.Sprintf("%s/%s", data_folder, "meta_data.csv")
-	csv_searches := csvservice.NewGenericCSVReaderService[modelcsv.SearchMetadata]()
-	err := csv_searches.ReadFromFiles(metadata_file_name)
-	if err == nil {
-		searches := csv_searches.GetData()
-		search_service.SaveAll(searches)
-	}
-	var data_file_name string
-	if file_name == "" {
-		data_file_name = fmt.Sprintf("%s/%s-%s.csv", data_folder, "vehicle", time.Now().Format("2006-01-02"))
-	} else {
-		data_file_name = fmt.Sprintf("%s/%s", data_folder, file_name)
-	}
-
-	//records_files := fmt.Sprintf("%s/%s", data_folder, "vehicle-{}.csv")
-	log.Println("found vehicles files: {}", data_file_name)
-	record_service := csvservice.NewRecordService()
-	vehicles := record_service.GetRecords([]string{data_file_name})
-	records := dbservice.Map(vehicles, func(source modelcsv.Record) dbmodel.VehicleRecord {
-		vehicle := dbmodel.VehicleRecord{}
-		deepcopier.Copy(source).To(&vehicle)
-		vehicle.CreatedOn = utils.ConvertDate(source.CreatedOn)
-		vehicle.UpdatedOn = utils.ConvertDate(source.UpdatedOn)
-		return vehicle
-	})
-	existing_vehicles, _ := vehicle_service.GetVehicles()
-
-	join := dbservice.Filter(existing_vehicles, func(record dbmodel.VehicleRecord) bool {
-		for _, vehicle := range vehicles {
-			if vehicle.ID == record.ID {
-				return false
-			}
-		}
-		return true
-	})
-	log.Println("found records: {}", len(join))
-	ids := dbservice.Map(join, func(record dbmodel.VehicleRecord) modelcsv.Advert {
-		return modelcsv.Advert{ID: record.ID}
-	})
-	ids_file_name := fmt.Sprintf("%s/%s", data_folder, "for_update.csv")
-	csvservice.WriteToCSVFile(ids_file_name, ids)
-
-	log.Println("found records: {}", len(vehicles))
-
-	if len(records) > 0 {
-		log.Println("auditing records: {}", len(records))
-		audit_service.AuditAll(records)
-	}
-
-	if len(vehicles) > 0 {
-		vehicle_service.SaveAll(vehicles)
-	}
-
-}
-
-func ProcessDeletedIds(data_folder string, file_name string) {
-	var data_file_name string
-	if file_name == "" {
-		data_file_name = fmt.Sprintf("%s/%s-%s.csv", data_folder, "vehicle", time.Now().Format("2006-01-02"))
-	} else {
-		data_file_name = fmt.Sprintf("%s/%s", data_folder, file_name)
-	}
+func DeletedVehiclesByIds(data_folder string, file_name string) {
+	data_file_name := utils.FileName(data_folder, file_name)
 	deleted_service := csvservice.NewDeletedRecordsService()
 	deleted := deleted_service.GetDeletedRecords([]string{data_file_name})
 	audit_service.LogDeleted(deleted)
