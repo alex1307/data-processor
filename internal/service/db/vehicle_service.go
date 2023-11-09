@@ -32,6 +32,7 @@ func (v *VehicleService) Save(record modelcsv.Record) (string, error) {
 }
 
 func (v *VehicleService) SaveAll(records []modelcsv.Record) error {
+
 	new_vehicles := Map(records, func(r modelcsv.Record) dbmodel.VehicleRecord {
 		vehicle := dbmodel.VehicleRecord{}
 		deepcopier.Copy(r).To(&vehicle)
@@ -101,7 +102,18 @@ func (v *VehicleService) GetDataForUpdate() ([]dbmodel.VehicleRecord, error) {
 	db := v.db_service.Connect()
 	today := time.Now()
 	day_before := time.Date(today.Year(), today.Month(), today.Day()-1, 0, 0, 0, 0, time.UTC)
-	err := db.Where("deleted_on is not null AND created_on <= {}", day_before).Find(&vehicles).Error
+	err := db.Where("deleted_on = '0001-01-01' AND created_on <= ? AND YEAR >= 2004", day_before).Find(&vehicles).Error
+	if err != nil {
+		return vehicles, err
+	}
+
+	return vehicles, nil
+}
+
+func (v *VehicleService) FindByListOfIds(ids []string) ([]dbmodel.VehicleRecord, error) {
+	vehicles := []dbmodel.VehicleRecord{}
+	db := v.db_service.Connect()
+	err := db.Where("id in ?", ids).Find(&vehicles).Error
 	if err != nil {
 		return vehicles, err
 	}

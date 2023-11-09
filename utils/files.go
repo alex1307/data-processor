@@ -19,6 +19,8 @@ func FileName(dir_name string, file_name string) string {
 			panic(err)
 		}
 		working_dir = fmt.Sprintf("%s/%s", currentUser.HomeDir, DEFAULT_WORKING_DIR)
+	} else {
+		working_dir = dir_name
 	}
 	_, err := os.Stat(working_dir)
 	if err != nil {

@@ -2,11 +2,15 @@ package main
 
 import (
 	"data-processor/app"
+	"data-processor/utils"
 	"flag"
+	"fmt"
 	"log"
 	"os"
+	"os/user"
 	"runtime"
 	"runtime/pprof"
+	"time"
 )
 
 func main() {
@@ -16,25 +20,38 @@ func main() {
 
 	runMemProfile()
 	defer runMemProfile()
-
+	currentUser, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+	defaultDir := fmt.Sprintf("%s/%s", currentUser.HomeDir, utils.DEFAULT_WORKING_DIR)
+	defaultFileName := fmt.Sprintf("%s-%s.csv", utils.DEFAULT_VEHICLE_FILE_NAME, time.Now().Format("2006-01-02"))
+	defaultUpdatedName := fmt.Sprintf("%s-%s.csv", "updated-vehicle", time.Now().Format("2006-01-02"))
+	log.Println("Default directory: ", defaultDir)
 	update := flag.NewFlagSet("update", flag.ExitOnError)
-	updateFileName := update.String("source", "", "Vehicle csv source file name")
-	updatedDataDirName := update.String("dir", "", "File directory name")
+	updateFileName := update.String("source", defaultUpdatedName, "Vehicle csv source file name")
+	updatedDataDirName := update.String("dir", defaultDir, "File directory name")
 
 	add := flag.NewFlagSet("add", flag.ExitOnError)
-	addFileName := add.String("source", "", "Vehicle csv source file name")
+	addFileName := add.String("source", defaultFileName, "Vehicle csv source file name")
 	metaDataFileName := add.String("meta-data", "meta_data.csv", "Search meta-data source file name")
-	newDataDirName := add.String("dir", "", "File directory name")
+	newDataDirName := add.String("dir", defaultDir, "File directory name")
 
 	delete := flag.NewFlagSet("delete", flag.ExitOnError)
-	deleteFileName := delete.String("source", "", "Vehicle csv source file name")
-	deletedFilesDirName := delete.String("dir", "", "File directory name")
+	deleteFileName := delete.String("source", "not-found-ids.csv", "Vehicle csv source file name")
+	deletedFilesDirName := delete.String("dir", defaultDir, "File directory name")
+
+	forUpdate := flag.NewFlagSet("update-list", flag.ExitOnError)
+	forUpdateFileName := forUpdate.String("source", "ids-for-update.csv", "Vehicle csv source file name")
+	forUpdateFilesDirName := forUpdate.String("dir", defaultDir, "File directory name")
+
 	if len(os.Args) < 2 {
 
 	} else if os.Args[1] == "update" {
 		update.Parse(os.Args[2:])
-		log.Println("Updated vehicles file name: ", *updateFileName)
 		log.Println("Updated vehicles directory: ", *updatedDataDirName)
+		log.Println("Updated vehicles file name: ", *updateFileName)
+		app.UpdateVehicles(*updatedDataDirName, *updateFileName)
 	} else if os.Args[1] == "add" {
 		add.Parse(os.Args[2:])
 		log.Println("New vehicles file name: ", *addFileName)
@@ -45,48 +62,24 @@ func main() {
 		delete.Parse(os.Args[2:])
 		log.Println("Deleted vehicles file name: ", *deleteFileName)
 		log.Println("Deleted vehicles directory: ", *deletedFilesDirName)
+		app.DeletedVehiclesByIds(*deletedFilesDirName, *deleteFileName)
+	} else if os.Args[1] == "update-list" {
+		forUpdate.Parse(os.Args[2:])
+		log.Println("Vehicles for update file name: ", *forUpdateFileName)
+		log.Println("Vehicles for update directory: ", *forUpdateFilesDirName)
+		app.GenerateUpdateList(*forUpdateFilesDirName, *forUpdateFileName)
 	} else {
-		var dir string
-		var vehicles_file_name string
-		var meta_data_file_name string
-		var for_update_file_name string
-		var deleted_file_name string
+		log.Println("Default: Process new vehicles... ", defaultDir)
+		var dirName string
+		var fileName string
+		var metaDataFileName string
 
-		update := flag.NewFlagSet("update", flag.ExitOnError)
-		update.String("source", "", "Vehicle csv source file name")
-
-		add := flag.NewFlagSet("add", flag.ExitOnError)
-		add.String("source", "", "Vehicle csv source file name")
-
-		delete := flag.NewFlagSet("delete", flag.ExitOnError)
-		delete.String("source", "", "Vehicle csv source file name")
-
-		flag.StringVar(&vehicles_file_name, "source", "", "Vehicle csv source file name")
-		flag.StringVar(&meta_data_file_name, "meta-data-file", "", "Meta data csv source file name")
-		flag.StringVar(&for_update_file_name, "for-update-file", "", "Adverts for update file name")
-		flag.StringVar(&deleted_file_name, "deleted-ids-file", "", "Deleted adverts csv file name")
-		flag.StringVar(&dir, "data_dir", "", "Data directory")
+		flag.StringVar(&fileName, "source", defaultFileName, "Vehicle csv source file name")
+		flag.StringVar(&metaDataFileName, "meta-data", "meta_data.csv", "Meta data csv source file name")
+		flag.StringVar(&dirName, "dir", defaultDir, "Data directory")
 		flag.Parse()
-		log.Println("Data directory: ", dir)
-		log.Println("Vehicles file name: ", vehicles_file_name)
-		log.Println("Meta data file name: ", meta_data_file_name)
-		log.Println("For update file name: ", for_update_file_name)
-		log.Println("Deleted ids file name: ", deleted_file_name)
+		app.AddNewVehicles(dirName, metaDataFileName, fileName)
 	}
-
-	// metasearh_file_name := fmt.Sprintf("%s/%s", DataDir, "meta_data.csv")
-	// records_for_update_file_name := fmt.Sprintf("%s/%s", DataDir, "for_update.csv")
-	// updated_records_file_name := fmt.Sprintf("%s/%s", DataDir, "updated.csv")
-	// deleted_file_name := fmt.Sprintf("%s/%s", DataDir, "deleted.csv")
-
-	// log.Println("Working data directory: ", DataDir)
-	// log.Println("args: {}, len: {}", os.Args, len(os.Args))
-	// // if len(os.Args) < 2 {
-	// // 	log.Println("No file name provided. Processing all files in the data directory")
-	// // 	app.ProcessCSVFiles(DataDir, "")
-	// // } else {
-	// // 	app.ProcessDeletedIds(DataDir, os.Args[1])
-	// // }
 }
 
 func runMemProfile() {
