@@ -110,7 +110,7 @@ func audit_100_records(slice_of_100_records []modelcsv.Record) []dbmodel.Vehicle
 	return vehicles
 }
 
-func AuditLog(file_name string) {
+func auditLog(file_name string) {
 	record_service := csvservice.NewRecordService()
 	vehicles := record_service.GetRecords([]string{file_name})
 	auditRecords(vehicles)
@@ -141,17 +141,13 @@ func processEquipments(file_name string) {
 	}
 }
 
-func UpdateVehicles(data_dir string, file_name string) {
-	source_file_name := utils.FileName(data_dir, file_name)
-	AuditLog(source_file_name)
-	processEquipments(source_file_name)
-}
-
-func AddNewVehicles(data_dir, meta_search_file_name string, source_file_name string) {
-	meta_file_name := utils.FileName(data_dir, meta_search_file_name)
+func ProcessVehicles(data_dir, source_file_name string, meta_search_file_name string) {
+	if meta_search_file_name != "" {
+		log.Panicln("Start processing meta searches...")
+		ProcessMetaSearches(meta_search_file_name)
+	}
 	records_file_name := utils.FileName(data_dir, source_file_name)
-	ProcessMetaSearches(meta_file_name)
-	AuditLog(records_file_name)
+	auditLog(records_file_name)
 	processEquipments(records_file_name)
 }
 

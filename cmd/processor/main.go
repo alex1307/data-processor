@@ -1,85 +1,58 @@
 package main
 
 import (
-	"data-processor/app"
-	"data-processor/utils"
-	"flag"
+	"context"
+	"data-processor/internal/connect"
+	KafkaConsumer "data-processor/internal/kafka"
+	service "data-processor/internal/service/db"
 	"fmt"
 	"log"
 	"os"
-	"os/user"
+	"os/signal"
 	"runtime"
 	"runtime/pprof"
-	"time"
+	"syscall"
 )
 
 func main() {
-
 	runCPUProfile()
-	defer runMemProfile()
+	defer runMemProfile() // You might want to check this call. It seems repetitive.
 
-	runMemProfile()
-	defer runMemProfile()
-	currentUser, err := user.Current()
-	if err != nil {
-		panic(err)
-	}
-	defaultDir := fmt.Sprintf("%s/%s", currentUser.HomeDir, utils.DEFAULT_WORKING_DIR)
-	defaultFileName := fmt.Sprintf("%s-%s.csv", utils.DEFAULT_VEHICLE_FILE_NAME, time.Now().Format("2006-01-02"))
-	defaultUpdatedName := fmt.Sprintf("%s-%s.csv", "updated-vehicle", time.Now().Format("2006-01-02"))
-	log.Println("Default directory: ", defaultDir)
-	update := flag.NewFlagSet("update", flag.ExitOnError)
-	updateFileName := update.String("source", defaultUpdatedName, "Vehicle csv source file name")
-	updatedDataDirName := update.String("dir", defaultDir, "File directory name")
+	// Setup context with cancellation
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Ensure context cancellation when main exits
 
-	add := flag.NewFlagSet("add", flag.ExitOnError)
-	addFileName := add.String("source", defaultFileName, "Vehicle csv source file name")
-	metaDataFileName := add.String("meta-data", "meta_data.csv", "Search meta-data source file name")
-	newDataDirName := add.String("dir", defaultDir, "File directory name")
+	// Database connection setup
+	config := connect.GetPosgresConfig("resources/config/postgres_config.yml")
+	dbConnection := connect.ConnectToDatabase(config)
 
-	delete := flag.NewFlagSet("delete", flag.ExitOnError)
-	deleteFileName := delete.String("source", "not-found-ids.csv", "Vehicle csv source file name")
-	deletedFilesDirName := delete.String("dir", defaultDir, "File directory name")
+	// Kafka consumer setup
+	basicDataService := service.NewDetailsDataService(dbConnection)
+	priceDataService := service.NewPriceDataService(dbConnection)
+	consumptionDataService := service.NewConsumptionDataService(dbConnection)
 
-	forUpdate := flag.NewFlagSet("update-list", flag.ExitOnError)
-	forUpdateFileName := forUpdate.String("source", "ids-for-update.csv", "Vehicle csv source file name")
-	forUpdateFilesDirName := forUpdate.String("dir", defaultDir, "File directory name")
+	basicDataProcessor := KafkaConsumer.NewDataProcessor("base_info", "test", basicDataService)
+	priceDataProcessor := KafkaConsumer.NewDataProcessor("price_info", "test", priceDataService)
+	consumptionDataProcessor := KafkaConsumer.NewDataProcessor("consumption_info", "test", consumptionDataService)
 
-	if len(os.Args) < 2 {
+	basicDataConsumer := KafkaConsumer.NewKafkaConsumer("base_info", "basic_data_group2", []string{"127.0.0.1:9094"}, basicDataProcessor)
+	priceDataConsumer := KafkaConsumer.NewKafkaConsumer("price_info", "price_data_group2", []string{"127.0.0.1:9094"}, priceDataProcessor)
+	consumptionDataConsumer := KafkaConsumer.NewKafkaConsumer("consumption_info", "consumption_data_group2", []string{"127.0.0.1:9094"}, consumptionDataProcessor)
 
-	} else if os.Args[1] == "update" {
-		update.Parse(os.Args[2:])
-		log.Println("Updated vehicles directory: ", *updatedDataDirName)
-		log.Println("Updated vehicles file name: ", *updateFileName)
-		app.UpdateVehicles(*updatedDataDirName, *updateFileName)
-	} else if os.Args[1] == "add" {
-		add.Parse(os.Args[2:])
-		log.Println("New vehicles file name: ", *addFileName)
-		log.Println("Meta data file name: ", *metaDataFileName)
-		log.Println("New vehicles directory: ", *newDataDirName)
-		app.AddNewVehicles(*newDataDirName, *metaDataFileName, *addFileName)
-	} else if os.Args[1] == "delete" {
-		delete.Parse(os.Args[2:])
-		log.Println("Deleted vehicles file name: ", *deleteFileName)
-		log.Println("Deleted vehicles directory: ", *deletedFilesDirName)
-		app.DeletedVehiclesByIds(*deletedFilesDirName, *deleteFileName)
-	} else if os.Args[1] == "update-list" {
-		forUpdate.Parse(os.Args[2:])
-		log.Println("Vehicles for update file name: ", *forUpdateFileName)
-		log.Println("Vehicles for update directory: ", *forUpdateFilesDirName)
-		app.GenerateUpdateList(*forUpdateFilesDirName, *forUpdateFileName)
-	} else {
-		log.Println("Default: Process new vehicles... ", defaultDir)
-		var dirName string
-		var fileName string
-		var metaDataFileName string
+	// Run consumer in a goroutine
+	go basicDataConsumer.Consume(ctx)
+	go priceDataConsumer.Consume(ctx)
+	go consumptionDataConsumer.Consume(ctx)
 
-		flag.StringVar(&fileName, "source", defaultFileName, "Vehicle csv source file name")
-		flag.StringVar(&metaDataFileName, "meta-data", "meta_data.csv", "Meta data csv source file name")
-		flag.StringVar(&dirName, "dir", defaultDir, "Data directory")
-		flag.Parse()
-		app.AddNewVehicles(dirName, metaDataFileName, fileName)
-	}
+	// Wait for interrupt signal to gracefully shut down
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	// Perform shutdown operations
+	fmt.Println("Shutting down gracefully...")
+	cancel() // Cancel context to stop consumer
+	// Other cleanup code if necessary
 }
 
 func runMemProfile() {
