@@ -69,3 +69,8 @@ message Consumption {
     float fuel_consumption = 7;  // Optional in Rust, so no 'optional' keyword needed in proto3
     float kw_consuption = 8;     // Optional in Rust, so no 'optional' keyword needed in proto3
 }
+
+message ID {
+    string id = 1;
+    string source = 2;
+}

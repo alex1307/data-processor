@@ -6,15 +6,11 @@ import (
 )
 
 type DataProcessor struct {
-	Topic        string
-	GroupID      string
 	protoService service.ProtoService
 }
 
-func NewDataProcessor(topic string, groupID string, protoService service.ProtoService) *DataProcessor {
+func NewDataProcessor(protoService service.ProtoService) *DataProcessor {
 	return &DataProcessor{
-		Topic:        topic,
-		GroupID:      groupID,
 		protoService: protoService,
 	}
 }

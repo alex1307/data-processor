@@ -27,22 +27,35 @@ func main() {
 	dbConnection := connect.ConnectToDatabase(config)
 
 	// Kafka consumer setup
-	basicDataService := service.NewDetailsDataService(dbConnection)
+	basicDataService := service.NewBasicDataService(dbConnection)
 	priceDataService := service.NewPriceDataService(dbConnection)
 	consumptionDataService := service.NewConsumptionDataService(dbConnection)
+	detailsDataService := service.NewDetailsDataService(dbConnection)
+	changeLogDataService := service.NewChangeLogDataService(dbConnection)
+	idService := service.NewIDDataService(dbConnection)
 
-	basicDataProcessor := KafkaConsumer.NewDataProcessor("base_info", "test", basicDataService)
-	priceDataProcessor := KafkaConsumer.NewDataProcessor("price_info", "test", priceDataService)
-	consumptionDataProcessor := KafkaConsumer.NewDataProcessor("consumption_info", "test", consumptionDataService)
+	basicDataProcessor := KafkaConsumer.NewDataProcessor(basicDataService)
+	priceDataProcessor := KafkaConsumer.NewDataProcessor(priceDataService)
+	consumptionDataProcessor := KafkaConsumer.NewDataProcessor(consumptionDataService)
+	detailedDataProcessor := KafkaConsumer.NewDataProcessor(detailsDataService)
+	changeLogProcessor := KafkaConsumer.NewDataProcessor(changeLogDataService)
+	idProcessor := KafkaConsumer.NewDataProcessor(idService)
+	brokers := []string{"127.0.0.1:9094"}
 
-	basicDataConsumer := KafkaConsumer.NewKafkaConsumer("base_info", "basic_data_group2", []string{"127.0.0.1:9094"}, basicDataProcessor)
-	priceDataConsumer := KafkaConsumer.NewKafkaConsumer("price_info", "price_data_group2", []string{"127.0.0.1:9094"}, priceDataProcessor)
-	consumptionDataConsumer := KafkaConsumer.NewKafkaConsumer("consumption_info", "consumption_data_group2", []string{"127.0.0.1:9094"}, consumptionDataProcessor)
+	basicDataConsumer := KafkaConsumer.NewKafkaConsumer("base_info", "base_info", brokers, basicDataProcessor)
+	priceDataConsumer := KafkaConsumer.NewKafkaConsumer("price_info", "price_info", brokers, priceDataProcessor)
+	consumptionDataConsumer := KafkaConsumer.NewKafkaConsumer("consumption_info", "consumption_info", brokers, consumptionDataProcessor)
+	detailedDataConsumer := KafkaConsumer.NewKafkaConsumer("details_info", "details_info", brokers, detailedDataProcessor)
+	changeLogConsumer := KafkaConsumer.NewKafkaConsumer("change_log", "change_log", brokers, changeLogProcessor)
+	idConsumer := KafkaConsumer.NewKafkaConsumer("ids", "id_info", brokers, idProcessor)
 
 	// Run consumer in a goroutine
 	go basicDataConsumer.Consume(ctx)
 	go priceDataConsumer.Consume(ctx)
 	go consumptionDataConsumer.Consume(ctx)
+	go detailedDataConsumer.Consume(ctx)
+	go changeLogConsumer.Consume(ctx)
+	go idConsumer.Consume(ctx)
 
 	// Wait for interrupt signal to gracefully shut down
 	sigChan := make(chan os.Signal, 1)

@@ -122,6 +122,7 @@ func ConnectToDatabase(config Config) Connect {
 		&dbmodel.DetailsData{},
 		&dbmodel.PriceData{},
 		&dbmodel.ChangeLogData{},
+		&dbmodel.IDData{},
 	)
 	if err != nil {
 		log.Panicln("Failed to migrate database", err)

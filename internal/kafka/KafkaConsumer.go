@@ -27,7 +27,7 @@ func NewKafkaConsumer(topic string, groupID string, brokers []string, processor 
 
 func (k *KafkaConsumer) Consume(ctx context.Context) {
 	messageBuffer := make([][]byte, 0, 100)
-	timeout := time.Duration(3) * time.Second
+	timeout := time.Duration(5) * time.Second
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 
@@ -68,7 +68,7 @@ func (k *KafkaConsumer) Consume(ctx context.Context) {
 					messageBuffer = append(messageBuffer, msg.Value)
 				}
 			}
-			messageBuffer = append(messageBuffer, msg.Value)
+			// messageBuffer = append(messageBuffer, msg.Value)
 			if len(messageBuffer) >= 100 {
 				k.Processor.ProcessMessages(messageBuffer)
 				messageBuffer = messageBuffer[:0]
