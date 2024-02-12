@@ -2,12 +2,13 @@ package connect
 
 import (
 	dbmodel "data-processor/internal/model/db"
+	"data-processor/utils"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v3"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -37,7 +38,7 @@ type PostgresConfig struct {
 	Password string `yaml:"password"`
 	Schema   string `yaml:"schema"`
 	Database string `yaml:"database"`
-	Port     int    `yaml:"port"`
+	Port     string `yaml:"port"`
 	SSLMode  string `yaml:"sslmode"`
 }
 
@@ -81,7 +82,7 @@ func ConnectToDatabase(config Config) Connect {
 	var err error
 	connectionString := config.GetConnectionString()
 	database := config.GetDatabase()
-	log.Println("Connecting to database...", connectionString)
+	logrus.Info("Connecting to database...", connectionString)
 	switch database {
 	case "postgres":
 		db, err = gorm.Open(postgres.Open(connectionString), &gorm.Config{
@@ -125,7 +126,7 @@ func ConnectToDatabase(config Config) Connect {
 		&dbmodel.IDData{},
 	)
 	if err != nil {
-		log.Panicln("Failed to migrate database", err)
+		logrus.Error("Failed to migrate database", err)
 		panic("failed to sync with database")
 	}
 
@@ -137,8 +138,14 @@ type Content struct {
 }
 
 func (c PostgresConfig) GetConnectionString() string {
-	return fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s",
-		c.Host, c.User, c.Password, c.Database, c.Port, c.SSLMode)
+	host := utils.GetEnv("DB_HOST", c.Host)
+	port := utils.GetEnv("DB_PORT", c.Port)
+	user := utils.GetEnv("DB_USER", c.User)
+	password := utils.GetEnv("DB_PASSWORD", c.Password)
+	dbname := utils.GetEnv("DB_NAME", c.Database)
+	ssl := utils.GetEnv("SSL_MODE", c.SSLMode)
+	return fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
+		host, user, password, dbname, port, ssl)
 }
 
 func (c PostgresConfig) GetTablePrefix() string {
@@ -152,16 +159,16 @@ func (c PostgresConfig) GetDatabase() string {
 func GetPosgresConfig(filename string) Config {
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		log.Fatalf("Failed to read file: %v", err)
+		logrus.Error("Failed to read file", err)
 	}
 	// Create a variable to hold the YAML data
 	var content Content
-	log.Println("File is", string(data))
+	logrus.Info("Filename is: ", filename)
 	yaml.Unmarshal(data, &content)
 
-	log.Println("Config", content)
+	logrus.Debug("YAML content is: ", content)
 	if err != nil {
-		log.Fatalf("Failed to unmarshal YAML: %v", err)
+		logrus.Error("Failed to unmarshal YAML: ", err)
 	}
 	config := content.Config
 

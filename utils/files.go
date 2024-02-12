@@ -2,10 +2,11 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/user"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 const DEFAULT_VEHICLE_FILE_NAME = "vehicle"
@@ -25,7 +26,7 @@ func FileName(dir_name string, file_name string) string {
 	_, err := os.Stat(working_dir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Println("Directory Does not exists. {}", working_dir)
+			logrus.Error("Directory Does not exists: ", working_dir)
 			panic(err)
 		}
 	}
@@ -38,7 +39,7 @@ func FileName(dir_name string, file_name string) string {
 	_, err = os.Stat(working_file_name)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Println("File name {} not exists.", working_file_name)
+			logrus.Error("File name {} not exists.", working_file_name)
 			panic(err)
 		}
 	}

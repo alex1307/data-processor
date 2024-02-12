@@ -2,7 +2,8 @@ package kafka
 
 import (
 	service "data-processor/internal/service/db"
-	"log"
+
+	"github.com/sirupsen/logrus"
 )
 
 type DataProcessor struct {
@@ -20,7 +21,8 @@ func (b *DataProcessor) ProcessMessage(message []byte) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Saved record with id: %d", id)
+	logrus.WithFields(logrus.Fields{
+		"id": id}).Info("Saved record with id")
 	return nil
 }
 

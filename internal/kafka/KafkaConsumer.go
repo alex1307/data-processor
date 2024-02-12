@@ -3,10 +3,10 @@ package kafka
 import (
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	kafka "github.com/segmentio/kafka-go"
+	"github.com/sirupsen/logrus"
 )
 
 type KafkaConsumer struct {
@@ -35,7 +35,7 @@ func (k *KafkaConsumer) Consume(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			// Handle the context being canceled
-			log.Println("Context canceled, stopping the consumer")
+			logrus.Info("Context canceled, stopping the consumer")
 			return
 
 		case <-timer.C:
@@ -44,7 +44,7 @@ func (k *KafkaConsumer) Consume(ctx context.Context) {
 				k.Processor.ProcessMessages(messageBuffer)
 				messageBuffer = messageBuffer[:0]
 			}
-			log.Println("Timeout reached, no messages received for", timeout.Seconds(), "seconds")
+			logrus.Info("Timeout reached, no messages received for", timeout.Seconds(), "seconds")
 			timer.Reset(timeout)
 
 		default:
@@ -52,10 +52,10 @@ func (k *KafkaConsumer) Consume(ctx context.Context) {
 			if err != nil {
 				if errors.Is(err, context.Canceled) {
 					// Context has been canceled, stop processing
-					log.Println("Context canceled during message read, stopping the consumer")
+					logrus.Info("Context canceled during message read, stopping the consumer")
 					return
 				}
-				log.Printf("error while receiving message: %s", err.Error())
+				logrus.Error("Error reading message from Kafka: ", err)
 				continue
 			}
 

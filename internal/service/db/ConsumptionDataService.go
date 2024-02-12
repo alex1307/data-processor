@@ -4,8 +4,8 @@ import (
 	"data-processor/internal/connect"
 	"data-processor/internal/internal/proto_model"
 	dbmodel "data-processor/internal/model/db"
-	"log"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -23,10 +23,10 @@ func (v *ConsumptionDataService) fromBinary(message []byte) (dbmodel.Consumption
 	var source *proto_model.Consumption = &proto_model.Consumption{}
 	proto_err := proto.Unmarshal(message, source)
 	if proto_err != nil {
-		log.Fatalf("error while unmarshaling protobuf message: %s", proto_err.Error())
+		logrus.Error("error while unmarshaling protobuf message: ", proto_err.Error())
 		return dbmodel.ConsumptionData{}, proto_err
 	}
-	log.Println("Unmarshaled protobuf message: ", source)
+	logrus.Info("Unmarshaled protobuf message: ", source)
 	var consumptionData = dbmodel.ConsumptionData{
 		ADVERT_ID:       source.Id,
 		Source:          source.Source,
@@ -46,10 +46,10 @@ func (v ConsumptionDataService) Save(binary []byte) (uint64, error) {
 		return uint64(0), err
 	}
 	db := v.db_service.Connect()
-	log.Println("Saving record: ", source)
+	logrus.Info("Saving record: ", source)
 	result := db.Save(&source)
 	if result.Error != nil {
-		log.Fatalf("error while saving record: %s", result.Error.Error())
+		logrus.Error("error while saving record: ", result.Error.Error())
 		return uint64(0), result.Error
 	}
 	var id = source.ID
@@ -61,13 +61,13 @@ func (v ConsumptionDataService) SaveAll(records [][]byte) error {
 	for _, record := range records {
 		source, err := v.Save(record)
 		if err != nil {
-			log.Fatalf("error while saving record: %v", source)
+			logrus.Error("error while saving record: ", source)
 			continue
 		} else {
 			counter++
 		}
 	}
-	log.Printf("Saved %v records", counter)
+	logrus.Info("Saved records: ", counter)
 	return nil
 }
 

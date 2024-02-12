@@ -6,6 +6,7 @@ import (
 	dbmodel "data-processor/internal/model/db"
 	"log"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -26,7 +27,7 @@ func (v *ChangeLogDataService) fromBinary(message []byte) (dbmodel.ChangeLogData
 		log.Fatalf("error while unmarshaling protobuf message: %s", proto_err.Error())
 		return dbmodel.ChangeLogData{}, proto_err
 	}
-	log.Println("Unmarshaled protobuf message: ", source)
+	logrus.Info("Unmarshaled protobuf message: ", source)
 	var data = dbmodel.ChangeLogData{
 		ADVERT_ID:           source.Id,
 		Source:              source.Source,
@@ -46,10 +47,10 @@ func (v ChangeLogDataService) Save(binary []byte) (uint64, error) {
 		return uint64(0), err
 	}
 	db := v.db_service.Connect()
-	log.Println("Saving record: ", source)
+	logrus.Info("Saving record: ", source)
 	result := db.Save(&source)
 	if result.Error != nil {
-		log.Fatalf("error while saving record: %s", result.Error.Error())
+		logrus.Error("error while saving record: ", result.Error.Error())
 		return uint64(0), result.Error
 	}
 	var id = source.ID
@@ -61,13 +62,13 @@ func (v ChangeLogDataService) SaveAll(records [][]byte) error {
 	for _, record := range records {
 		source, err := v.Save(record)
 		if err != nil {
-			log.Fatalf("error while saving record: %v", source)
+			logrus.Error("error while saving record: ", source)
 			continue
 		} else {
 			counter++
 		}
 	}
-	log.Printf("Saved %v records", counter)
+	logrus.Info("Saved ", counter, " records")
 	return nil
 }
 
