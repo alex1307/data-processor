@@ -4,10 +4,10 @@ import (
 	"context"
 	modelcsv "data-processor/internal/model/csv"
 	dbmodel "data-processor/internal/model/db"
-	"log"
 	"sync"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -24,12 +24,12 @@ func NewAuditService(db_service *gorm.DB) *AuditService {
 }
 
 func (a *AuditService) AuditAll(records []dbmodel.VehicleRecord) {
-	log.Println("auditing changes for all records")
+	logrus.Info("auditing changes for all records")
 	executeUpdate(records, a.db)
 }
 
 func (a *AuditService) LogDeleted(deletedIds []modelcsv.Advert) {
-	log.Println("auditing changes for all records")
+	logrus.Info("auditing changes for all records")
 	counter := 0
 	for _, deletedId := range deletedIds {
 		deleted := dbmodel.DeletedOnAuditLog{
@@ -38,17 +38,17 @@ func (a *AuditService) LogDeleted(deletedIds []modelcsv.Advert) {
 		}
 		err := a.db.Save(&deleted).Error
 		if condition := err != nil; condition {
-			log.Println(err)
+			logrus.Error(err)
 			continue
 		}
 		counter++
 		if counter%1000 == 0 {
-			log.Println("deleted ", counter, " records")
+			logrus.Info("deleted ", counter, " records")
 			time.Sleep(1 * time.Second)
 		}
 		record := a.db.Where("id = ?", deletedId.GetID()).Find(&dbmodel.VehicleRecord{})
 		if record.Error != nil {
-			log.Println(record.Error)
+			logrus.Error(record.Error)
 			continue
 		} else {
 			if record.RowsAffected == 0 {
@@ -57,13 +57,13 @@ func (a *AuditService) LogDeleted(deletedIds []modelcsv.Advert) {
 			deleted_record := dbmodel.VehicleRecord{}
 			err := record.First(&deleted_record).Error
 			if err != nil {
-				log.Println(err)
+				logrus.Error(err)
 				continue
 			}
 			deleted_record.DeletedOn = time.Now()
 			err = a.db.Save(&deleted_record).Error
 			if err != nil {
-				log.Println(err)
+				logrus.Error(err)
 				continue
 			}
 		}
@@ -89,7 +89,7 @@ func saveAndAuditRecord(new_record dbmodel.VehicleRecord, db *gorm.DB) {
 		}
 		err := db.Save(&price_audit_log)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	}
 	old_date := old_record.UpdatedOn.Format("2006-01-02")
@@ -103,7 +103,7 @@ func saveAndAuditRecord(new_record dbmodel.VehicleRecord, db *gorm.DB) {
 		}
 		err := db.Save(&updated_on_audit_log)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	}
 
@@ -117,7 +117,7 @@ func saveAndAuditRecord(new_record dbmodel.VehicleRecord, db *gorm.DB) {
 		}
 		err := db.Save(&view_count_audit_log)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	}
 
@@ -130,7 +130,7 @@ func saveAndAuditRecord(new_record dbmodel.VehicleRecord, db *gorm.DB) {
 		}
 		err := db.Save(&equipment_audit_log)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	}
 
@@ -168,7 +168,7 @@ func executeUpdate(records []dbmodel.VehicleRecord, db *gorm.DB) {
 		recordsChannel <- record
 		counter++
 		if counter%1000 == 0 {
-			log.Println("audited ", counter, " records")
+			logrus.Info("audited ", counter, " records")
 			time.Sleep(2 * time.Second)
 		}
 	}

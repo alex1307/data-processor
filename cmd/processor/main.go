@@ -1,96 +1,105 @@
 package main
 
 import (
-	"data-processor/app"
+	"context"
+	"data-processor/internal/connect"
+	KafkaConsumer "data-processor/internal/kafka"
+	"data-processor/internal/logger"
+	service "data-processor/internal/service/db"
 	"data-processor/utils"
-	"flag"
 	"fmt"
-	"log"
+	"io"
 	"os"
-	"os/user"
+	"os/signal"
 	"runtime"
 	"runtime/pprof"
-	"time"
+	"syscall"
+
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
+	// runCPUProfile()
+	// defer runMemProfile() // You might want to check this call. It seems repetitive.
 
-	runCPUProfile()
-	defer runMemProfile()
-
-	runMemProfile()
-	defer runMemProfile()
-	currentUser, err := user.Current()
+	// Setup context with cancellation
+	sessionID := logger.GenerateSessionID()
+	f, err := os.OpenFile("logs/processor.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
 		panic(err)
 	}
-	defaultDir := fmt.Sprintf("%s/%s", currentUser.HomeDir, utils.DEFAULT_WORKING_DIR)
-	defaultFileName := fmt.Sprintf("%s-%s.csv", utils.DEFAULT_VEHICLE_FILE_NAME, time.Now().Format("2006-01-02"))
-	defaultUpdatedName := fmt.Sprintf("%s-%s.csv", "updated-vehicle", time.Now().Format("2006-01-02"))
-	log.Println("Default directory: ", defaultDir)
-	update := flag.NewFlagSet("update", flag.ExitOnError)
-	updateFileName := update.String("source", defaultUpdatedName, "Vehicle csv source file name")
-	updatedDataDirName := update.String("dir", defaultDir, "File directory name")
+	defer f.Close()
+	// Create a new instance of the custom formatter
+	customFormatter := &logger.CustomTextFormatter{SessionID: sessionID}
+	logrus.SetLevel(logrus.InfoLevel)
+	logrus.SetOutput(io.MultiWriter(os.Stdout, f))
 
-	add := flag.NewFlagSet("add", flag.ExitOnError)
-	addFileName := add.String("source", defaultFileName, "Vehicle csv source file name")
-	metaDataFileName := add.String("meta-data", "meta_data.csv", "Search meta-data source file name")
-	newDataDirName := add.String("dir", defaultDir, "File directory name")
+	logrus.SetReportCaller(true)
+	// Set the custom formatter as the formatter for the logger
+	logrus.SetFormatter(customFormatter)
 
-	delete := flag.NewFlagSet("delete", flag.ExitOnError)
-	deleteFileName := delete.String("source", "not-found-ids.csv", "Vehicle csv source file name")
-	deletedFilesDirName := delete.String("dir", defaultDir, "File directory name")
+	// Now the logger is configured for the entire application
+	logrus.Info("Starting data processor...")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Ensure context cancellation when main exits
 
-	forUpdate := flag.NewFlagSet("update-list", flag.ExitOnError)
-	forUpdateFileName := forUpdate.String("source", "ids-for-update.csv", "Vehicle csv source file name")
-	forUpdateFilesDirName := forUpdate.String("dir", defaultDir, "File directory name")
+	// Database connection setup
+	config := connect.GetPosgresConfig("resources/config/postgres_config.yml")
+	dbConnection := connect.ConnectToDatabase(config)
 
-	if len(os.Args) < 2 {
+	// Kafka consumer setup
+	basicDataService := service.NewBasicDataService(dbConnection)
+	priceDataService := service.NewPriceDataService(dbConnection)
+	consumptionDataService := service.NewConsumptionDataService(dbConnection)
+	detailsDataService := service.NewDetailsDataService(dbConnection)
+	changeLogDataService := service.NewChangeLogDataService(dbConnection)
+	idService := service.NewIDDataService(dbConnection)
 
-	} else if os.Args[1] == "update" {
-		update.Parse(os.Args[2:])
-		log.Println("Updated vehicles directory: ", *updatedDataDirName)
-		log.Println("Updated vehicles file name: ", *updateFileName)
-		app.UpdateVehicles(*updatedDataDirName, *updateFileName)
-	} else if os.Args[1] == "add" {
-		add.Parse(os.Args[2:])
-		log.Println("New vehicles file name: ", *addFileName)
-		log.Println("Meta data file name: ", *metaDataFileName)
-		log.Println("New vehicles directory: ", *newDataDirName)
-		app.AddNewVehicles(*newDataDirName, *metaDataFileName, *addFileName)
-	} else if os.Args[1] == "delete" {
-		delete.Parse(os.Args[2:])
-		log.Println("Deleted vehicles file name: ", *deleteFileName)
-		log.Println("Deleted vehicles directory: ", *deletedFilesDirName)
-		app.DeletedVehiclesByIds(*deletedFilesDirName, *deleteFileName)
-	} else if os.Args[1] == "update-list" {
-		forUpdate.Parse(os.Args[2:])
-		log.Println("Vehicles for update file name: ", *forUpdateFileName)
-		log.Println("Vehicles for update directory: ", *forUpdateFilesDirName)
-		app.GenerateUpdateList(*forUpdateFilesDirName, *forUpdateFileName)
-	} else {
-		log.Println("Default: Process new vehicles... ", defaultDir)
-		var dirName string
-		var fileName string
-		var metaDataFileName string
+	basicDataProcessor := KafkaConsumer.NewDataProcessor(basicDataService)
+	priceDataProcessor := KafkaConsumer.NewDataProcessor(priceDataService)
+	consumptionDataProcessor := KafkaConsumer.NewDataProcessor(consumptionDataService)
+	detailedDataProcessor := KafkaConsumer.NewDataProcessor(detailsDataService)
+	changeLogProcessor := KafkaConsumer.NewDataProcessor(changeLogDataService)
+	idProcessor := KafkaConsumer.NewDataProcessor(idService)
+	kafka_env := utils.GetEnv("KAFKA_BROKER", "127.0.0.1:9094")
+	brokers := []string{kafka_env}
 
-		flag.StringVar(&fileName, "source", defaultFileName, "Vehicle csv source file name")
-		flag.StringVar(&metaDataFileName, "meta-data", "meta_data.csv", "Meta data csv source file name")
-		flag.StringVar(&dirName, "dir", defaultDir, "Data directory")
-		flag.Parse()
-		app.AddNewVehicles(dirName, metaDataFileName, fileName)
-	}
+	basicDataConsumer := KafkaConsumer.NewKafkaConsumer("base_info", "base_info", brokers, basicDataProcessor)
+	priceDataConsumer := KafkaConsumer.NewKafkaConsumer("price_info", "price_info", brokers, priceDataProcessor)
+	consumptionDataConsumer := KafkaConsumer.NewKafkaConsumer("consumption_info", "consumption_info", brokers, consumptionDataProcessor)
+	detailedDataConsumer := KafkaConsumer.NewKafkaConsumer("details_info", "details_info", brokers, detailedDataProcessor)
+	changeLogConsumer := KafkaConsumer.NewKafkaConsumer("change_log", "change_log", brokers, changeLogProcessor)
+	idConsumer := KafkaConsumer.NewKafkaConsumer("ids", "id_info", brokers, idProcessor)
+
+	// Run consumer in a goroutine
+	go basicDataConsumer.Consume(ctx)
+	go priceDataConsumer.Consume(ctx)
+	go consumptionDataConsumer.Consume(ctx)
+	go detailedDataConsumer.Consume(ctx)
+	go changeLogConsumer.Consume(ctx)
+	go idConsumer.Consume(ctx)
+
+	// Wait for interrupt signal to gracefully shut down
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	// Perform shutdown operations
+	logrus.Info("Shutting down gracefully...")
+	cancel() // Cancel context to stop consumer
+	// Other cleanup code if necessary
 }
 
 func runMemProfile() {
 	f, err := os.Create("memprofile")
 	if err != nil {
-		log.Fatal("could not create memory profile: ", err)
+		logrus.Error("could not create memory profile: ", err)
 	}
 	defer f.Close() // error handling omitted for example
 	runtime.GC()    // get up-to-date statistics
 	if err := pprof.WriteHeapProfile(f); err != nil {
-		log.Fatal("could not write memory profile: ", err)
+		logrus.Error("could not write memory profile: ", err)
 	}
 	f.Close()
 }
@@ -98,11 +107,11 @@ func runMemProfile() {
 func runCPUProfile() {
 	f, err := os.Create("cpuprofile")
 	if err != nil {
-		log.Fatal("could not create CPU profile: ", err)
+		logrus.Error("could not create CPU profile: ", err)
 	}
 	defer f.Close() // error handling omitted for example
 	if err := pprof.StartCPUProfile(f); err != nil {
-		log.Fatal("could not start CPU profile: ", err)
+		logrus.Error("could not start CPU profile: ", err)
 	}
 	defer pprof.StopCPUProfile()
 }

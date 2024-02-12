@@ -5,7 +5,7 @@ import (
 	csv "data-processor/internal/model/csv"
 	dbmodel "data-processor/internal/model/db"
 
-	"log"
+	"github.com/sirupsen/logrus"
 )
 
 type SearchService struct {
@@ -49,7 +49,7 @@ func (s *SearchService) SaveAll(data []csv.SearchMetadata) []dbmodel.Searches {
 		}
 		new_records = append(new_records, record)
 	}
-	log.Println("Saving ", len(new_records), " records...")
+	logrus.Info("Saving ", len(new_records), " records...")
 	db := s.db_service.Connect()
 	db.Save(&new_records)
 	return new_records
