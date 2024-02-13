@@ -1,7 +1,7 @@
 
-all: clean build
+all: clean install
 
-build:
+install:
     GOOS=linux GOARCH=amd64 go build -o processor .
 clean:
 	go clean

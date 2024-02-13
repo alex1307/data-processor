@@ -15,3 +15,5 @@ protoc --go_out=internal/protos --go_opt=paths=source_relative \
 protoc --go_out=internal \
        --go-grpc_out=internal \
        resources/protos/*.proto       
+
+docker build -t data-processor . --no-cache --progress=plain       
