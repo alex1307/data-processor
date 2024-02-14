@@ -24,9 +24,9 @@ func main() {
 
 	// Setup context with cancellation
 	sessionID := logger.GenerateSessionID()
-	f, err := os.OpenFile("logs/processor.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	f, err := os.OpenFile("/bin/logs/processor.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		fmt.Println("Failed to create logfile" + "log.txt")
+		fmt.Println("Failed to create logfile: " + "/bin/logs/processor.log")
 		panic(err)
 	}
 	defer f.Close()

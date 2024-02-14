@@ -106,25 +106,47 @@ func ConnectToDatabase(config Config) Connect {
 	if err != nil {
 		panic("failed to connect database")
 	}
+	if db.Migrator().HasTable(&dbmodel.BasicData{}) {
+		logrus.Info("Table exists")
+	} else {
+		logrus.Info("Table does not exist")
+		db.AutoMigrate(&dbmodel.BasicData{})
+	}
 
-	err = db.AutoMigrate(
-		&dbmodel.Searches{},
-		&dbmodel.VehicleRecord{},
-		&dbmodel.Equipment{},
-		&dbmodel.VehicleLog{},
-		&dbmodel.EquipmentAuditLog{},
-		&dbmodel.ViewCountAuditLog{},
-		&dbmodel.PriceAuditLog{},
-		&dbmodel.UpdatedOnAuditLog{},
-		&dbmodel.DeletedOnAuditLog{},
-		&dbmodel.AdvertData{},
-		&dbmodel.BasicData{},
-		&dbmodel.ConsumptionData{},
-		&dbmodel.DetailsData{},
-		&dbmodel.PriceData{},
-		&dbmodel.ChangeLogData{},
-		&dbmodel.IDData{},
-	)
+	if db.Migrator().HasTable(&dbmodel.ConsumptionData{}) {
+		logrus.Info("Table exists")
+	} else {
+		logrus.Info("Table does not exist")
+		db.AutoMigrate(&dbmodel.ConsumptionData{})
+	}
+
+	if db.Migrator().HasTable(&dbmodel.DetailsData{}) {
+		logrus.Info("Table exists")
+	} else {
+		logrus.Info("Table does not exist")
+		db.AutoMigrate(&dbmodel.DetailsData{})
+	}
+
+	if db.Migrator().HasTable(&dbmodel.PriceData{}) {
+		logrus.Info("Table exists")
+	} else {
+		logrus.Info("Table does not exist")
+		db.AutoMigrate(&dbmodel.PriceData{})
+	}
+
+	if db.Migrator().HasTable(&dbmodel.ChangeLogData{}) {
+		logrus.Info("Table exists")
+	} else {
+		logrus.Info("Table does not exist")
+		db.AutoMigrate(&dbmodel.ChangeLogData{})
+	}
+
+	if db.Migrator().HasTable(&dbmodel.IDData{}) {
+		logrus.Info("Table exists")
+	} else {
+		logrus.Info("Table does not exist")
+		db.AutoMigrate(&dbmodel.IDData{})
+	}
 	if err != nil {
 		logrus.Error("Failed to migrate database", err)
 		panic("failed to sync with database")
@@ -149,7 +171,8 @@ func (c PostgresConfig) GetConnectionString() string {
 }
 
 func (c PostgresConfig) GetTablePrefix() string {
-	return fmt.Sprintf("%s.", c.Schema)
+	schema := utils.GetEnv("DB_SCHEMA", c.Schema)
+	return fmt.Sprintf("%s.", schema)
 }
 
 func (c PostgresConfig) GetDatabase() string {
