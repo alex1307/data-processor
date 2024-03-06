@@ -64,7 +64,7 @@ func (e *EquipmentService) GetColumns() map[int]string {
 	return e.equipment.Mapping
 }
 
-func (e *EquipmentService) equpipment2map(id int64) map[string]bool {
+func (e *EquipmentService) equpipment2map(id uint64) map[string]bool {
 
 	var indices []int
 	for i := 0; id > 0; i++ {
@@ -81,7 +81,7 @@ func (e *EquipmentService) equpipment2map(id int64) map[string]bool {
 	return result
 }
 
-func (s *EquipmentService) Save(EquipmentID int64) int64 {
+func (s *EquipmentService) Save(EquipmentID uint64) uint64 {
 	equipment := s.FromID(EquipmentID)
 	db := s.db_service.Connect()
 	err := db.Save(equipment).Error
@@ -92,7 +92,7 @@ func (s *EquipmentService) Save(EquipmentID int64) int64 {
 	return equipment.ID
 }
 
-func (s *EquipmentService) SaveAll(ListOfEquipmentIds *[]int64) int32 {
+func (s *EquipmentService) SaveAll(ListOfEquipmentIds *[]uint64) int32 {
 	equipments := s.FromSlice(ListOfEquipmentIds)
 	db := s.db_service.Connect()
 	err := db.Save(equipments).Error
@@ -142,7 +142,7 @@ func (s *EquipmentService) FindEquipment(EquipmentID int32) (bool, dbmodel.Equip
 	return true, equipment
 }
 
-func (s *EquipmentService) FromID(EquipmentID int64) *dbmodel.Equipment {
+func (s *EquipmentService) FromID(EquipmentID uint64) *dbmodel.Equipment {
 	target := &dbmodel.Equipment{}
 	v := s.equpipment2map(EquipmentID)
 	jsonData, _ := json.Marshal(v)
@@ -153,9 +153,9 @@ func (s *EquipmentService) FromID(EquipmentID int64) *dbmodel.Equipment {
 	return target
 }
 
-func (s *EquipmentService) FromSlice(source *[]int64) []dbmodel.Equipment {
+func (s *EquipmentService) FromSlice(source *[]uint64) []dbmodel.Equipment {
 	var records []dbmodel.Equipment = make([]dbmodel.Equipment, 0, len(*source))
-	ids := mapset.NewSet[int64]()
+	ids := mapset.NewSet[uint64]()
 	for _, id := range *source {
 		equipment := &dbmodel.Equipment{}
 		equipment = s.FromID(id)

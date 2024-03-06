@@ -24,7 +24,8 @@ func main() {
 
 	// Setup context with cancellation
 	sessionID := logger.GenerateSessionID()
-	f, err := os.OpenFile("/bin/logs/processor.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	log_dir := utils.GetEnv("LOG_DIR", "./logs")
+	f, err := os.OpenFile(log_dir+"/processor_log.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile: " + "/bin/logs/processor.log")
 		panic(err)
@@ -45,14 +46,15 @@ func main() {
 	defer cancel() // Ensure context cancellation when main exits
 
 	// Database connection setup
-	config := connect.GetPosgresConfig("resources/config/postgres_config.yml")
+	config := connect.GetPosgresConfig("./resources/config/postgres_config.yml")
 	dbConnection := connect.ConnectToDatabase(config)
 
 	// Kafka consumer setup
 	basicDataService := service.NewBasicDataService(dbConnection)
 	priceDataService := service.NewPriceDataService(dbConnection)
 	consumptionDataService := service.NewConsumptionDataService(dbConnection)
-	detailsDataService := service.NewDetailsDataService(dbConnection)
+	equipmentService := service.NewEquipmentService("./resources/config/equipment.yml", dbConnection)
+	detailsDataService := service.NewDetailsDataService(dbConnection, *equipmentService)
 	changeLogDataService := service.NewChangeLogDataService(dbConnection)
 	idService := service.NewIDDataService(dbConnection)
 

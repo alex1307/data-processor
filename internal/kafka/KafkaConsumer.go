@@ -58,17 +58,7 @@ func (k *KafkaConsumer) Consume(ctx context.Context) {
 				logrus.Error("Error reading message from Kafka: ", err)
 				continue
 			}
-
-			headers := msg.Headers
-			for _, header := range headers {
-				if header.Key == "command" && string(header.Value) == "stop" {
-					return
-				}
-				if header.Key == "command" && string(header.Value) == "process" {
-					messageBuffer = append(messageBuffer, msg.Value)
-				}
-			}
-			// messageBuffer = append(messageBuffer, msg.Value)
+			messageBuffer = append(messageBuffer, msg.Value)
 			if len(messageBuffer) >= 100 {
 				k.Processor.ProcessMessages(messageBuffer)
 				messageBuffer = messageBuffer[:0]

@@ -40,9 +40,10 @@ RUN chmod +x ./processor
 # Deploy the application binary into a lean image
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-RUN mkdir /bin/logs
-COPY --from=builder /app/processor /bin/processor
-COPY --from=builder /app/resources/config /bin/resources/config
+RUN mkdir -p /app/logs
+RUN mkdir -p /app/resources/config
+COPY --from=builder /app/processor /app/processor
+COPY --from=builder /app/resources/config /app/resources/config
 
 ENV KAFKA_BROKER=kafka:9092
 ENV DB_HOST=postgres-server
@@ -53,7 +54,10 @@ ENV SSL_MODE=disable
 ENV DB_SCHEMA=public
 ENV DB_NAME=vehicles
 
-
+RUN echo "Current directory:" && pwd
+RUN echo "Contents of current directory:" && ls -la
+RUN echo "Contents of /bin:" && ls -la /app
+RUN echo "Contents of /config:" && ls -la /app/resources/config
 
 # Command to run the compiled binary.
-CMD ["bin/processor"] 
+CMD ["app/processor"] 

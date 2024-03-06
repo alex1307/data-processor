@@ -5,7 +5,7 @@ import (
 )
 
 type Equipment struct {
-	ID                    int64     `gorm:"column:id; primary_key:yes;autoIncrement:false;"`
+	ID                    uint64    `gorm:"column:id; primary_key:yes;autoIncrement:false;"`
 	Parktronic            bool      `gorm:"column:parktronic; default: false"`
 	AdaptiveCruiseControl bool      `gorm:"column:adaptive_cruise_control; default: false"`
 	DVD                   bool      `gorm:"column:dvd; default: false"`

@@ -14,7 +14,7 @@ type Record struct {
 	Phone     string `csv:"phone"`
 	Location  string `csv:"location"`
 	ViewCount int32  `csv:"view_count"`
-	Equipment int64  `csv:"equipment"`
+	Equipment uint64 `csv:"equipment"`
 	Top       bool   `csv:"top"`
 	VIP       bool   `csv:"vip"`
 	Sold      bool   `csv:"sold"`

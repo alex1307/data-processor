@@ -11,6 +11,6 @@ type PriceData struct {
 	EstimatedPrice uint32    `gorm:"column:estimated_price; default: 0"`
 	SaveDiff       uint32    `gorm:"column:save_diff; default: 0"`
 	OverpricedDiff uint32    `gorm:"column:overpiced_diff; default: 0"`
-	Ranges         string    `gorm:"column:ranges; character varying(50);"`
+	Ranges         string    `gorm:"column:ranges; character varying(50);null;"`
 	CreatedOn      time.Time `gorm:"column:created_on; null; type: date; default: now()"`
 }

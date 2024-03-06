@@ -28,7 +28,7 @@ func NewRecordService() {
 func (s *DataService) ProcessCSVFiles(records_file_names []string) error {
 	records := s.record_service.GetRecords(records_file_names)
 	s.vehicle_service.SaveAll(records)
-	equipment_ids := Map(records, func(record csv.Record) int64 {
+	equipment_ids := Map(records, func(record csv.Record) uint64 {
 		return record.Equipment
 	})
 	s.equipment_service.SaveAll(&equipment_ids)
