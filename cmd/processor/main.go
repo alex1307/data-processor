@@ -53,8 +53,7 @@ func main() {
 	basicDataService := service.NewBasicDataService(dbConnection)
 	priceDataService := service.NewPriceDataService(dbConnection)
 	consumptionDataService := service.NewConsumptionDataService(dbConnection)
-	equipmentService := service.NewEquipmentService("./resources/config/equipment.yml", dbConnection)
-	detailsDataService := service.NewDetailsDataService(dbConnection, *equipmentService)
+	detailsDataService := service.NewDetailsDataService(dbConnection)
 	changeLogDataService := service.NewChangeLogDataService(dbConnection)
 	idService := service.NewIDDataService(dbConnection)
 

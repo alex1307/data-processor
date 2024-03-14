@@ -9,7 +9,7 @@ type DetailsData struct {
 	Phone      string    `gorm:"column:phone; type: character varying(50);null;"`
 	Location   string    `gorm:"column:location; type: character varying(100);null;"`
 	ViewCount  uint32    `gorm:"column:view_count; default: 0;null;"`
-	Equipment  uint64    `gorm:"column:equipment; default: 0;null;"`
+	Equipment  string    `gorm:"column:equipment; type: character varying(200);null;"`
 	SellerName string    `gorm:"column:seller_name; type: character varying(50);null;"`
 	IsDealer   bool      `gorm:"column:is_dealer; default: false;null;"`
 	CreatedOn  time.Time `gorm:"column:created_on; null; type: date; default: now()"`

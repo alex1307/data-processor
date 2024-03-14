@@ -10,14 +10,12 @@ import (
 )
 
 type DetailsDataService struct {
-	db_service        connect.Connect
-	equipment_service EquipmentService
+	db_service connect.Connect
 }
 
-func NewDetailsDataService(db_service connect.Connect, equipment_service EquipmentService) DetailsDataService {
+func NewDetailsDataService(db_service connect.Connect) DetailsDataService {
 	return DetailsDataService{
 		db_service,
-		equipment_service,
 	}
 }
 
@@ -53,9 +51,6 @@ func (v DetailsDataService) Save(binary []byte) (uint64, error) {
 	if result.Error != nil {
 		logrus.Error("error while saving record: ", result.Error.Error())
 		return uint64(0), result.Error
-	}
-	if source.Equipment > 0 {
-		v.equipment_service.Save(source.Equipment)
 	}
 	var id = source.ID
 	return id, nil

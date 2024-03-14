@@ -16,4 +16,4 @@ protoc --go_out=internal \
        --go-grpc_out=internal \
        resources/protos/*.proto       
 
-docker build -t data-processor . --no-cache --progress=plain       
+docker build -t processor . --no-cache --progress=plain       

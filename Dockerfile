@@ -1,5 +1,5 @@
 # Use the official Go image as a parent image.
-FROM golang:1.22.0-alpine3.19 as builder
+FROM golang:1.22.1-alpine3.19 as builder
 RUN apk add --no-cache musl-dev
 RUN apk add --no-cache openssl-dev
 RUN apk add --no-cache pkgconfig
